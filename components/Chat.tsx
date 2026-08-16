@@ -97,8 +97,9 @@ export function Chat() {
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
           <p className="pt-16 text-center text-sm text-gray-400">
-            Schreib etwas auf Deutsch — der Tutor passt sich deinem Niveau
-            ({level}) an und hilft dir, das nächste zu erreichen.
+            {level === "A1"
+              ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
+              : `Schreib etwas auf Deutsch — der Tutor passt sich deinem Niveau (${level}) an und hilft dir, das nächste zu erreichen.`}
           </p>
         )}
         {messages.map((m, i) => (
