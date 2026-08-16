@@ -48,10 +48,13 @@ export class GeminiProvider implements LLMProvider {
     }
 
     // SSE stream: each event is a `data: {json}` line with a partial candidate.
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffered = "";
-    for await (const chunk of res.body) {
-      buffered += decoder.decode(chunk as Uint8Array, { stream: true });
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffered += decoder.decode(value, { stream: true });
       const lines = buffered.split("\n");
       buffered = lines.pop() ?? "";
       for (const line of lines) {
