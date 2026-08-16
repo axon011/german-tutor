@@ -15,6 +15,9 @@ export function Chat() {
 
   useEffect(() => {
     const saved = localStorage.getItem("cefr-level");
+    // One-time mount sync from an external store (localStorage) — the
+    // cascading-render concern doesn't apply and SSR forbids an initializer.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isCefrLevel(saved)) setLevel(saved);
   }, []);
 
