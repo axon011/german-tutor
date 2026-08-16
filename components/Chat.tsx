@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
+import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { MessageBubble } from "./MessageBubble";
 
 export function Chat() {
@@ -9,7 +10,18 @@ export function Chat() {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [level, setLevel] = useState<CefrLevel>("B1");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("cefr-level");
+    if (isCefrLevel(saved)) setLevel(saved);
+  }, []);
+
+  function changeLevel(next: CefrLevel) {
+    setLevel(next);
+    localStorage.setItem("cefr-level", next);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -30,7 +42,7 @@ export function Chat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: history }),
+        body: JSON.stringify({ messages: history, level }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -65,11 +77,28 @@ export function Chat() {
 
   return (
     <div className="flex h-full w-full max-w-2xl flex-col">
+      <div className="flex items-center justify-end gap-2 px-4 pt-2">
+        <label htmlFor="level" className="text-xs text-gray-500">
+          Mein Niveau
+        </label>
+        <select
+          id="level"
+          value={level}
+          onChange={(e) => changeLevel(e.target.value as CefrLevel)}
+          className="rounded-md border border-gray-300 bg-transparent px-2 py-1 text-xs dark:border-gray-700"
+        >
+          {CEFR_LEVELS.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
           <p className="pt-16 text-center text-sm text-gray-400">
-            Schreib etwas auf Deutsch — der Tutor antwortet auf B1-Niveau und
-            hilft dir, Richtung B2 zu kommen.
+            Schreib etwas auf Deutsch — der Tutor passt sich deinem Niveau
+            ({level}) an und hilft dir, das nächste zu erreichen.
           </p>
         )}
         {messages.map((m, i) => (

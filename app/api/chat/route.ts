@@ -1,6 +1,6 @@
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/provider";
-import { TUTOR_SYSTEM_PROMPT } from "@/lib/tutor-prompt";
+import { isCefrLevel, tutorSystemPrompt, type CefrLevel } from "@/lib/tutor-prompt";
 
 // Node runtime is required: ClaudeCodeProvider spawns a child process.
 export const runtime = "nodejs";
@@ -11,15 +11,20 @@ export const dynamic = "force-dynamic";
 const HISTORY_WINDOW = 10;
 
 /**
- * POST { messages: ChatMessage[] } → SSE stream.
+ * POST { messages: ChatMessage[], level?: "A1"|"A2"|"B1"|"B2" } → SSE stream.
  * Events: `data: {"text": "..."}` per chunk, `data: [DONE]` at the end,
  * `data: {"error": "..."}` if the provider fails mid-stream.
  */
 export async function POST(req: Request) {
   let messages: ChatMessage[];
+  let level: CefrLevel = "B1";
   try {
     const body = await req.json();
     messages = body.messages;
+    if (body.level !== undefined) {
+      if (!isCefrLevel(body.level)) throw new Error("invalid level");
+      level = body.level;
+    }
     if (
       !Array.isArray(messages) ||
       messages.length === 0 ||
@@ -47,7 +52,7 @@ export async function POST(req: Request) {
         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
       try {
         for await (const chunk of provider.streamChat(
-          TUTOR_SYSTEM_PROMPT,
+          tutorSystemPrompt(level),
           windowed,
         )) {
           send(JSON.stringify({ text: chunk }));
