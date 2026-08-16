@@ -9,6 +9,11 @@ import type { ChatMessage, LLMProvider } from "./provider";
  * - `--strict-mcp-config --mcp-config '{"mcpServers":{}}'` is mandatory.
  *   Without it `claude -p` inherits the interactive MCP env (claude-mem hook
  *   et al.) and hangs or adds ~8s+ init.
+ * - `--settings '{"disableAllHooks":true}'` is equally mandatory: user-level
+ *   hooks (claude-mem observers) otherwise run inside every -p call and cost
+ *   ~10s before the API request even starts (measured 2026-08-16).
+ * - `MAX_THINKING_TOKENS=0` in the env drops the thinking block Haiku emits
+ *   before the text block — several seconds of silence before token one.
  * - Windows exit code 0xC0000142 (3221225794) is a transient spawn failure:
  *   retry once, but only if nothing was streamed yet.
  * - The user prompt goes in via stdin, not argv — avoids Windows command-line
@@ -67,6 +72,8 @@ export class ClaudeCodeProvider implements LLMProvider {
       "--strict-mcp-config",
       "--mcp-config",
       '{"mcpServers":{}}',
+      "--settings",
+      '{"disableAllHooks":true}',
     ];
     if (this.opts.model) args.push("--model", this.opts.model);
 
@@ -74,6 +81,7 @@ export class ClaudeCodeProvider implements LLMProvider {
       stdio: ["pipe", "pipe", "pipe"],
       // claude.exe is a native executable — no shell, no cmd.exe quoting.
       shell: false,
+      env: { ...process.env, MAX_THINKING_TOKENS: "0" },
     });
 
     const timeoutMs = this.opts.timeoutMs ?? 120_000;
