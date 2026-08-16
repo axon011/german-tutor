@@ -89,8 +89,21 @@ Corrector — stream the Conversation reply immediately, corrections annotate 1�
    No auth, no DB. Done = a real 10-minute German conversation on the live URL.
 2. **Parallel multi-agent turn.** Conversation + Corrector concurrent; inline error
    annotations (click highlighted span → explanation card); Langfuse per-agent spans.
+   The Corrector's error records are the data source for slice 2.5 — design its JSON
+   schema with the recommender in mind (error `type` must map to the CEFR grammar map).
+2.5. **Recommendation loop ("Heute üben").** Closes the Talk → Extract → Recommend →
+   Talk loop that the pitch promises. RULE-BASED recommender, not an LLM: rank error
+   categories by frequency × recency-decay against a static CEFR grammar map. Outputs:
+   (a) "Heute üben" card — today's focus + the stat that justifies it; (b) 2–3
+   micro-drills generated from the learner's own past erroneous sentences (one batched
+   LLM call at session end, per efficiency rules); (c) focus injection into the tutor
+   prompt ("baue beiläufig Dativ-Präpositionen ins Gespräch ein") so the chat itself
+   delivers the recommendation. Error store = localStorage until slice 3's DB replaces
+   it behind the same interface. Explainable-by-design — the formula is a portfolio
+   talking point, "asked the LLM what to practice" is not.
 3. **Persistence + SRS.** Postgres/Drizzle, NextAuth, every correction → error record,
-   SM-2 spaced-repetition deck, error-trend dashboard.
+   SM-2 spaced-repetition deck, error-trend dashboard. Recommender reads from the DB
+   instead of localStorage; SRS decides *when* to review what the recommender chose.
 4. (Later, only if earned) Voice input via Web Speech API; level-assessment onboarding;
    GraphRAG-backed learner-error graph.
 
