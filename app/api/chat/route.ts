@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const provider = getProvider();
+  const provider = getProvider("conversation");
   const windowed = messages.slice(-HISTORY_WINDOW);
   const encoder = new TextEncoder();
 

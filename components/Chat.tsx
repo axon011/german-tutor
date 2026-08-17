@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
+import type { CorrectionError } from "@/lib/corrector";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { LogoMark } from "./LogoMark";
-import { MessageBubble } from "./MessageBubble";
+import { MessageBubble, TypeChip } from "./MessageBubble";
 
 const SUGGESTIONS = [
   "Ich möchte über mein Wochenende sprechen",
@@ -18,6 +19,11 @@ export function Chat() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [level, setLevel] = useState<CefrLevel>("B1");
+  /** Corrections keyed by the user message's index in `messages`. */
+  const [corrections, setCorrections] = useState<
+    Record<number, CorrectionError[]>
+  >({});
+  const [panelOpen, setPanelOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +59,23 @@ export function Chat() {
     const history = [...messages, { role: "user" as const, content }];
     // Placeholder assistant message; streamed chunks are appended to it.
     setMessages([...history, { role: "assistant", content: "" }]);
+
+    // Corrector agent: fire-and-forget, deliberately NOT awaited. The tutor's
+    // reply must start streaming immediately; corrections annotate the message
+    // a second or two later, and a corrector failure is a non-event.
+    const userIndex = history.length - 1;
+    fetch("/api/correct", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ message: content, level }),
+    })
+      .then((res) => res.json())
+      .then(({ errors }: { errors?: CorrectionError[] }) => {
+        if (!errors?.length) return;
+        setCorrections((prev) => ({ ...prev, [userIndex]: errors }));
+        appendErrorLog(errors, content, level);
+      })
+      .catch(() => {});
 
     try {
       const res = await fetch("/api/chat", {
@@ -91,8 +114,13 @@ export function Chat() {
     }
   }
 
+  const allErrors = Object.keys(corrections)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .flatMap((i) => corrections[i]);
+
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="relative flex h-full w-full flex-col overflow-hidden">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 dark:border-gray-800">
         <div className="flex items-center gap-2.5">
           <LogoMark className="h-8 w-8 text-xs" />
@@ -103,6 +131,19 @@ export function Chat() {
             </p>
           </div>
         </div>
+        {allErrors.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setPanelOpen((o) => !o)}
+            aria-expanded={panelOpen}
+            className="order-last flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1 text-xs font-medium text-stone-600 transition-colors hover:border-amber-400 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 sm:order-none dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+          >
+            Fehler
+            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300">
+              {allErrors.length}
+            </span>
+          </button>
+        )}
         <div
           role="group"
           aria-label="Mein Niveau"
@@ -159,7 +200,7 @@ export function Chat() {
           m.role === "assistant" && m.content === "" ? (
             <TypingIndicator key={i} />
           ) : (
-            <MessageBubble key={i} message={m} />
+            <MessageBubble key={i} message={m} corrections={corrections[i]} />
           ),
         )}
         {error && <p className="text-center text-sm text-red-500">{error}</p>}
@@ -202,8 +243,111 @@ export function Chat() {
           )}
         </button>
       </form>
+
+      {panelOpen && (
+        <ErrorPanel errors={allErrors} onClose={() => setPanelOpen(false)} />
+      )}
     </div>
   );
+}
+
+function ErrorPanel({
+  errors,
+  onClose,
+}: {
+  errors: CorrectionError[];
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Fehlerliste schließen"
+        onClick={onClose}
+        className="absolute inset-0 z-20 cursor-default bg-stone-900/20 dark:bg-black/40"
+      />
+      <aside
+        aria-label="Deine Fehler"
+        className="animate-message-in absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-stone-200 bg-white shadow-xl sm:w-80 dark:border-gray-800 dark:bg-gray-950"
+      >
+        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-gray-800">
+          <h2 className="text-sm font-semibold">Deine Fehler</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Schließen"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+          >
+            ×
+          </button>
+        </div>
+        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+          {errors.length === 0 ? (
+            <p className="text-sm text-stone-500 dark:text-gray-400">
+              Noch keine Fehler — weiter so!
+            </p>
+          ) : (
+            errors.map((e, i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-stone-200 px-3 py-2 dark:border-gray-800"
+              >
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="text-red-700 line-through dark:text-red-300">
+                    {e.span}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="text-stone-400 dark:text-gray-500"
+                  >
+                    →
+                  </span>
+                  <span className="font-medium text-green-700 dark:text-green-300">
+                    {e.correction}
+                  </span>
+                  <TypeChip type={e.type} />
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-gray-400">
+                  {e.explanation}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
+
+/**
+ * Append this turn's corrections to the local error log. This is the data feed
+ * a future recommender / SRS deck reads, so the shape stays flat and boring:
+ * one row per error, newest last, capped so localStorage can't grow unbounded.
+ */
+function appendErrorLog(
+  errors: CorrectionError[],
+  message: string,
+  level: CefrLevel,
+) {
+  try {
+    const ts = Date.now();
+    const existing = JSON.parse(localStorage.getItem("error-log") ?? "[]");
+    const log = Array.isArray(existing) ? existing : [];
+    for (const e of errors) {
+      log.push({
+        ts,
+        level,
+        message,
+        span: e.span,
+        type: e.type,
+        correction: e.correction,
+        explanation: e.explanation,
+      });
+    }
+    localStorage.setItem("error-log", JSON.stringify(log.slice(-500)));
+  } catch {
+    // Private mode / quota exceeded — the log is a nice-to-have.
+  }
 }
 
 function TypingIndicator() {
