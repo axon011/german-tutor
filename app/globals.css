@@ -198,6 +198,22 @@ body {
   animation: slide-in 200ms ease-out both;
 }
 
+/* A detail sheet takes over the card, rising from the bottom edge. */
+@keyframes sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-sheet-up {
+  animation: sheet-up 250ms ease-out both;
+}
+
 /* Corrections just landed on a message — flag them once, then get out of the
  * way. Two short flashes, not a loop. */
 @keyframes correction-pulse {
@@ -326,6 +342,7 @@ body {
   .animate-typing-dot,
   .animate-button-spin,
   .animate-slide-in,
+  .animate-sheet-up,
   .animate-cell-in,
   .animate-badge-bounce,
   .animate-shake,

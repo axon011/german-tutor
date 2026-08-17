@@ -29,10 +29,99 @@ export interface GrammarTable {
   rows: string[][];
 }
 
+/** The five families the rulebook is grouped into on the grid. */
+export type GrammarCategory =
+  | "verbs"
+  | "cases"
+  | "word-order"
+  | "nouns"
+  | "style";
+
+export const GRAMMAR_CATEGORIES: GrammarCategory[] = [
+  "verbs",
+  "cases",
+  "word-order",
+  "nouns",
+  "style",
+];
+
+/**
+ * Everything the UI needs to render a category: its English label and the
+ * Tailwind classes for its hue. Kept here so a card, a filter chip, a sheet
+ * header and a highlighted example word can never drift apart — and so the
+ * class strings are literal, which is what Tailwind's scanner needs.
+ */
+export const CATEGORY_META: Record<
+  GrammarCategory,
+  {
+    label: string;
+    /** Grid-card ground + border. */
+    card: string;
+    /** Glyph and other accent text on that ground. */
+    accent: string;
+    /** Solid dot on the filter chip. */
+    dot: string;
+    /** Label chip in the detail sheet. */
+    chip: string;
+    /** «marked» rule-carrying words inside an example. */
+    mark: string;
+  }
+> = {
+  verbs: {
+    label: "Verbs",
+    card: "bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/25",
+    accent: "text-rose-700 dark:text-rose-300",
+    dot: "bg-rose-500",
+    chip: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200",
+    mark: "bg-rose-200/60 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200",
+  },
+  cases: {
+    label: "Cases & articles",
+    card: "bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/25",
+    accent: "text-violet-700 dark:text-violet-300",
+    dot: "bg-violet-500",
+    chip: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-200",
+    mark: "bg-violet-200/60 text-violet-900 dark:bg-violet-500/20 dark:text-violet-200",
+  },
+  "word-order": {
+    label: "Word order",
+    card: "bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/25",
+    accent: "text-sky-700 dark:text-sky-300",
+    dot: "bg-sky-500",
+    chip: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200",
+    mark: "bg-sky-200/60 text-sky-900 dark:bg-sky-500/20 dark:text-sky-200",
+  },
+  nouns: {
+    label: "Nouns & pronouns",
+    card: "bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/25",
+    accent: "text-emerald-700 dark:text-emerald-300",
+    dot: "bg-emerald-500",
+    chip: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200",
+    mark: "bg-emerald-200/60 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200",
+  },
+  style: {
+    label: "Style & register",
+    card: "bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/25",
+    accent: "text-orange-700 dark:text-orange-300",
+    dot: "bg-orange-500",
+    chip: "bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-200",
+    mark: "bg-orange-200/60 text-orange-900 dark:bg-orange-500/20 dark:text-orange-200",
+  },
+};
+
 export interface GrammarTopic {
   /** Stable slug, always "gr-"-prefixed — the server routes on that prefix. */
   id: string;
   level: CefrLevel;
+  /** Which of the five families this rule belongs to — tints its card. */
+  category: GrammarCategory;
+  /**
+   * A very short typographic token that IS the rule — "den", "V2",
+   * "hat … gemacht". Shown large on the grid card, so it has to stay under
+   * ~14 characters. Content, not decoration: the learner should recognise the
+   * rule from the glyph alone.
+   */
+  glyph: string;
   /** English chrome — the card title. */
   title: string;
   /** One English line, shown while the card is collapsed. */
@@ -54,6 +143,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-01-personal-pronouns",
     level: "A1",
+    category: "nouns",
+    glyph: "ich · du · Sie",
     title: "Personal pronouns: ich, du, er, sie, es",
     summary: "Who is doing the action — and why German has three words for “you”.",
     explanation: [
@@ -83,6 +174,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-02-sein-haben",
     level: "A1",
+    category: "verbs",
+    glyph: "bin · hab",
     title: "The two key verbs: sein and haben",
     summary: "“To be” and “to have” are irregular — and you need them in every second sentence.",
     explanation: [
@@ -114,6 +207,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-03-present-tense",
     level: "A1",
+    category: "verbs",
+    glyph: "-e -st -t -en",
     title: "Present tense: how German verbs get their endings",
     summary: "Cut off -en, add the ending that matches the person.",
     explanation: [
@@ -146,6 +241,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-04-articles",
     level: "A1",
+    category: "cases",
+    glyph: "der die das",
     title: "The three articles: der, die, das",
     summary: "Every German noun has a gender, and the article is part of the word.",
     explanation: [
@@ -175,6 +272,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-05-plurals",
     level: "A1",
+    category: "nouns",
+    glyph: "Buch → Bücher",
     title: "Plural forms of nouns",
     summary: "German has five plural endings — and the article is always die.",
     explanation: [
@@ -206,6 +305,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-06-accusative",
     level: "A1",
+    category: "cases",
+    glyph: "den",
     title: "The accusative case",
     summary: "The thing the action happens to — and the only case that changes “der”.",
     explanation: [
@@ -234,6 +335,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-07-verb-second",
     level: "A1",
+    category: "word-order",
+    glyph: "V2",
     title: "Word order: the verb goes second",
     summary: "Whatever starts the sentence, the conjugated verb is in position two.",
     explanation: [
@@ -254,6 +357,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-08-questions",
     level: "A1",
+    category: "word-order",
+    glyph: "Wo? Wie? Was?",
     title: "Asking questions: yes/no and W-questions",
     summary: "Move the verb to the front, or put a W-word in front of it.",
     explanation: [
@@ -274,6 +379,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-09-negation",
     level: "A1",
+    category: "word-order",
+    glyph: "nicht · kein",
     title: "Saying no: nicht vs. kein",
     summary: "kein negates nouns, nicht negates everything else.",
     explanation: [
@@ -293,6 +400,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a1-10-possessives",
     level: "A1",
+    category: "nouns",
+    glyph: "mein · meine",
     title: "Possessive articles: mein, dein, sein, ihr",
     summary: "“My”, “your”, “his” — they behave exactly like ein.",
     explanation: [
@@ -323,6 +432,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-01-perfekt",
     level: "A2",
+    category: "verbs",
+    glyph: "hat … gemacht",
     title: "The Perfekt: talking about the past",
     summary: "haben or sein plus a participle at the end — the spoken past tense.",
     explanation: [
@@ -343,6 +454,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-02-praeteritum-sein-haben",
     level: "A2",
+    category: "verbs",
+    glyph: "war · hatte",
     title: "Präteritum of sein, haben and the modals",
     summary: "Some verbs sound wrong in the Perfekt — say war and hatte instead.",
     explanation: [
@@ -375,6 +488,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-03-dative",
     level: "A2",
+    category: "cases",
+    glyph: "dem · der",
     title: "The dative case",
     summary: "The person who receives something — and the case that changes everything.",
     explanation: [
@@ -404,6 +519,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-04-prepositions",
     level: "A2",
+    category: "cases",
+    glyph: "wohin? wo?",
     title: "Prepositions: fixed cases and the two-way group",
     summary: "Some prepositions always take one case; nine of them depend on movement.",
     explanation: [
@@ -435,6 +552,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-05-subordinate-clauses",
     level: "A2",
+    category: "word-order",
+    glyph: "…, weil",
     title: "Subordinate clauses with weil and dass",
     summary: "After a conjunction like weil or dass, the verb drops to the very end.",
     explanation: [
@@ -456,6 +575,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-06-comparative-superlative",
     level: "A2",
+    category: "cases",
+    glyph: "gut → besser",
     title: "Comparative and superlative",
     summary: "größer als, am größten — and the handful of irregular forms.",
     explanation: [
@@ -490,6 +611,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-07-modal-verbs",
     level: "A2",
+    category: "verbs",
+    glyph: "muss … gehen",
     title: "Modal verbs: können, müssen, wollen, dürfen, sollen, mögen",
     summary: "A modal in second position pushes the main verb, as an infinitive, to the end.",
     explanation: [
@@ -522,6 +645,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-08-separable-verbs",
     level: "A2",
+    category: "verbs",
+    glyph: "steh … auf",
     title: "Separable verbs",
     summary: "aufstehen splits in two: the verb stays, the prefix flies to the end.",
     explanation: [
@@ -542,6 +667,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-09-imperative",
     level: "A2",
+    category: "verbs",
+    glyph: "Komm!",
     title: "The imperative: giving instructions",
     summary: "Three forms — du, ihr and Sie — and only the Sie-form keeps its pronoun.",
     explanation: [
@@ -563,6 +690,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-a2-10-reflexive-verbs",
     level: "A2",
+    category: "verbs",
+    glyph: "sich freuen",
     title: "Reflexive verbs",
     summary: "Verbs that need mich, dich, sich — often where English needs nothing at all.",
     explanation: [
@@ -585,6 +714,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-01-relative-clauses",
     level: "B1",
+    category: "word-order",
+    glyph: "…, der …",
     title: "Relative clauses",
     summary: "der, die, das as “who / which” — the verb goes to the end.",
     explanation: [
@@ -605,6 +736,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-02-konjunktiv-ii-politeness",
     level: "B1",
+    category: "verbs",
+    glyph: "könnten Sie",
     title: "Konjunktiv II for politeness",
     summary: "würde, könnte, hätte, wäre — the difference between blunt and civil.",
     explanation: [
@@ -637,6 +770,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-03-passive-present",
     level: "B1",
+    category: "verbs",
+    glyph: "wird gemacht",
     title: "The passive voice (present)",
     summary: "werden plus participle — when the action matters more than the actor.",
     explanation: [
@@ -657,6 +792,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-04-genitive",
     level: "B1",
+    category: "cases",
+    glyph: "des Mannes",
     title: "The genitive case",
     summary: "Possession in writing: des Mannes, der Frau — spoken German prefers von.",
     explanation: [
@@ -677,6 +814,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-05-infinitive-with-zu",
     level: "B1",
+    category: "word-order",
+    glyph: "um … zu …",
     title: "Infinitive clauses with zu",
     summary: "Ich habe vor, früher aufzustehen — and when zu is forbidden.",
     explanation: [
@@ -697,6 +836,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-06-futur-i",
     level: "B1",
+    category: "verbs",
+    glyph: "wird … sein",
     title: "Futur I and how Germans really talk about the future",
     summary: "werden plus infinitive — but the present tense usually does the job.",
     explanation: [
@@ -717,6 +858,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-07-tekamolo",
     level: "B1",
+    category: "word-order",
+    glyph: "TeKaMoLo",
     title: "Word order in the middle field: TeKaMoLo",
     summary: "Time, cause, manner, place — in that order, between verb and end.",
     explanation: [
@@ -737,6 +880,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-08-adjective-endings",
     level: "B1",
+    category: "cases",
+    glyph: "ein guter Tag",
     title: "Adjective endings",
     summary: "An adjective in front of a noun always takes an ending — which one depends on the article.",
     explanation: [
@@ -767,6 +912,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-09-temporal-conjunctions",
     level: "B1",
+    category: "word-order",
+    glyph: "als · wenn",
     title: "als, wenn, während and the other time words",
     summary: "als for one moment in the past, wenn for repeated or future events.",
     explanation: [
@@ -787,6 +934,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b1-10-verbs-with-prepositions",
     level: "B1",
+    category: "verbs",
+    glyph: "warten auf",
     title: "Verbs with fixed prepositions",
     summary: "warten auf, denken an, sich freuen über — learn the verb and its preposition as one word.",
     explanation: [
@@ -809,6 +958,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-01-konjunktiv-ii-tenses",
     level: "B2",
+    category: "verbs",
+    glyph: "wäre gewesen",
     title: "Konjunktiv II across tenses: hypotheses and regrets",
     summary: "wäre and hätte + participle turn “what if” into “if only I had”.",
     explanation: [
@@ -839,6 +990,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-02-passive-all-tenses",
     level: "B2",
+    category: "verbs",
+    glyph: "wurde gebaut",
     title: "Passive in all tenses, and the Zustandspassiv",
     summary: "wird gebaut, wurde gebaut, ist gebaut worden — and the difference from ist gebaut.",
     explanation: [
@@ -872,6 +1025,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-03-nominalisierung",
     level: "B2",
+    category: "style",
+    glyph: "das Lesen",
     title: "Nominalisierung and nominal style",
     summary: "Turn verbs into nouns — the sound of written and official German.",
     explanation: [
@@ -892,6 +1047,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-04-participle-attributes",
     level: "B2",
+    category: "style",
+    glyph: "der wartende",
     title: "Participle constructions (Partizipialattribute)",
     summary: "A whole relative clause squeezed in front of the noun.",
     explanation: [
@@ -913,6 +1070,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-05-subjective-modals",
     level: "B2",
+    category: "verbs",
+    glyph: "soll · dürfte",
     title: "Modal verbs with a subjective meaning",
     summary: "Er muss krank sein doesn't mean he has to be ill — it means he must be ill.",
     explanation: [
@@ -933,6 +1092,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-06-n-deklination",
     level: "B2",
+    category: "nouns",
+    glyph: "den Menschen",
     title: "N-declension (die N-Deklination)",
     summary: "A group of masculine nouns adds -n or -en in every case except the nominative singular.",
     explanation: [
@@ -963,6 +1124,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-07-register",
     level: "B2",
+    category: "style",
+    glyph: "du · Sie",
     title: "Register: du, Sie and formal writing",
     summary: "Choosing the wrong level of formality is a bigger mistake than a wrong ending.",
     explanation: [
@@ -983,6 +1146,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-08-funktionsverbgefuege",
     level: "B2",
+    category: "style",
+    glyph: "Kritik üben",
     title: "Verb-noun collocations (Funktionsverbgefüge)",
     summary: "in Anspruch nehmen, zur Verfügung stellen — fixed pairs you cannot translate word by word.",
     explanation: [
@@ -1003,6 +1168,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-09-word-formation",
     level: "B2",
+    category: "nouns",
+    glyph: "-ung · -bar",
     title: "Word formation: prefixes and suffixes",
     summary: "Learn the building blocks and thousands of words become guessable.",
     explanation: [
@@ -1023,6 +1190,8 @@ export const GRAMMAR_TOPICS: GrammarTopic[] = [
   {
     id: "gr-b2-10-konnektoren",
     level: "B2",
+    category: "word-order",
+    glyph: "deshalb · zwar",
     title: "Connectors for argumentation",
     summary: "zwar … aber, dennoch, folglich — and the word order each one demands.",
     explanation: [
