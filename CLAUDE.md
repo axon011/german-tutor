@@ -115,6 +115,11 @@ every turn with a follow-up question to keep conversation alive.
 
 ## Rules
 
+- **UI language: English chrome, German content.** Buttons, tabs, labels, empty
+  states, aria-labels — English (an A1 beginner can't read German navigation).
+  German is reserved for learning content: tutor messages, practice sentences,
+  suggestion chips, level-dependent explanations.
+
 - Repo is public under github.com/axon011 — recruiters will read it. Clean commits,
   real README with architecture diagram once slice 1 ships.
 - No Co-Authored-By lines in commits.
