@@ -1,14 +1,18 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import type { Lesson } from "@/lib/curriculum";
+import { startLesson } from "@/lib/lesson-progress";
 import { Chat } from "./Chat";
+import { LearnTab } from "./LearnTab";
 import { LogoMark } from "./LogoMark";
 import { PracticeTab } from "./PracticeTab";
 import { ProgressTab } from "./ProgressTab";
 
-export type Tab = "chat" | "practice" | "progress";
+export type Tab = "learn" | "chat" | "practice" | "progress";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "learn", label: "Learn" },
   { id: "chat", label: "Conversation" },
   { id: "practice", label: "Practice" },
   { id: "progress", label: "Progress" },
@@ -19,14 +23,18 @@ const TABS: { id: Tab; label: string }[] = [
  *
  * Chat stays MOUNTED when you switch away (hidden with CSS, never unmounted)
  * because an in-flight SSE stream and the conversation itself must survive a
- * tab switch. Practice and Progress mount lazily on first visit and re-read
- * localStorage on every activation.
+ * tab switch. Learn, Practice and Progress mount lazily on first visit and
+ * re-read localStorage on every activation.
+ *
+ * The active lesson lives here rather than in Chat, because Learn starts it
+ * and Chat consumes it.
  */
 export function AppShell() {
   const [tab, setTab] = useState<Tab>("chat");
   const [visited, setVisited] = useState<Set<Tab>>(
     () => new Set<Tab>(["chat"]),
   );
+  const [activeLesson, setActiveLesson] = useState<string | null>(null);
 
   const tablistRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<Tab, HTMLButtonElement>());
@@ -56,6 +64,13 @@ export function AppShell() {
   function select(next: Tab) {
     setTab(next);
     setVisited((prev) => (prev.has(next) ? prev : new Set(prev).add(next)));
+  }
+
+  /** Arm the lesson and drop the learner straight into the conversation. */
+  function beginLesson(lesson: Lesson) {
+    startLesson(lesson.id);
+    setActiveLesson(lesson.id);
+    select("chat");
   }
 
   return (
@@ -115,13 +130,34 @@ export function AppShell() {
         </div>
       </header>
 
+      {visited.has("learn") && (
+        <div
+          role="tabpanel"
+          id="panel-learn"
+          aria-labelledby="tab-learn"
+          className={
+            tab === "learn" ? "flex min-h-0 flex-1 flex-col" : "hidden"
+          }
+        >
+          <LearnTab
+            active={tab === "learn"}
+            activeLesson={activeLesson}
+            onStart={beginLesson}
+          />
+        </div>
+      )}
+
       <div
         role="tabpanel"
         id="panel-chat"
         aria-labelledby="tab-chat"
         className={tab === "chat" ? "flex min-h-0 flex-1 flex-col" : "hidden"}
       >
-        <Chat />
+        <Chat
+          activeLesson={activeLesson}
+          onStartLesson={beginLesson}
+          onEndLesson={() => setActiveLesson(null)}
+        />
       </div>
 
       {visited.has("practice") && (

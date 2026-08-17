@@ -5,6 +5,13 @@ import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { appendErrorLog } from "@/lib/error-log";
+import { getLesson, lessonsForLevel, type Lesson } from "@/lib/curriculum";
+import {
+  COMPLETE_TURNS,
+  readLessonProgress,
+  recordLessonTurn,
+} from "@/lib/lesson-progress";
+import { CheckMark } from "./CheckMark";
 import { LogoMark } from "./LogoMark";
 import { MessageBubble, TypeChip } from "./MessageBubble";
 
@@ -14,7 +21,18 @@ const SUGGESTIONS = [
   "Lass uns über Essen reden",
 ];
 
-export function Chat() {
+/** How long the chip stays in its green "complete" state. */
+const CELEBRATE_MS = 4000;
+
+export function Chat({
+  activeLesson = null,
+  onStartLesson,
+  onEndLesson,
+}: {
+  activeLesson?: string | null;
+  onStartLesson?: (lesson: Lesson) => void;
+  onEndLesson?: () => void;
+} = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -25,8 +43,16 @@ export function Chat() {
     Record<number, CorrectionError[]>
   >({});
   const [panelOpen, setPanelOpen] = useState(false);
+  /** User turns already spent on the active lesson — the chip's "3/6". */
+  const [lessonTurns, setLessonTurns] = useState(0);
+  /** True for a few seconds right after the active lesson hits its target. */
+  const [celebrating, setCelebrating] = useState(false);
+  /** Has the learner ever finished a lesson? Gates the new-user CTA. */
+  const [everCompleted, setEverCompleted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const lesson = activeLesson ? getLesson(activeLesson) : undefined;
 
   useEffect(() => {
     const saved = localStorage.getItem("cefr-level");
@@ -36,9 +62,36 @@ export function Chat() {
     if (isCefrLevel(saved)) setLevel(saved);
   }, []);
 
+  // Adopt the stored turn count when a lesson is armed, so "Continue" picks up
+  // where the learner left off instead of restarting the counter at 0.
+  useEffect(() => {
+    const progress = readLessonProgress();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEverCompleted(Object.values(progress).some((e) => e.completedAt));
+    setCelebrating(false);
+    setLessonTurns(activeLesson ? (progress[activeLesson]?.turns ?? 0) : 0);
+  }, [activeLesson]);
+
+  useEffect(() => {
+    if (!celebrating) return;
+    const t = setTimeout(() => setCelebrating(false), CELEBRATE_MS);
+    return () => clearTimeout(t);
+  }, [celebrating]);
+
   function changeLevel(next: CefrLevel) {
     setLevel(next);
     localStorage.setItem("cefr-level", next);
+    // A lesson is level-specific; rather than silently mismatching the prompt
+    // to the new level, end it.
+    if (activeLesson) onEndLesson?.();
+  }
+
+  /** Empty-state CTA: first lesson of the level the learner has not finished. */
+  function startFirstLesson() {
+    const progress = readLessonProgress();
+    const lessons = lessonsForLevel(level);
+    const next = lessons.find((l) => !progress[l.id]?.completedAt) ?? lessons[0];
+    onStartLesson?.(next);
   }
 
   function applySuggestion(text: string) {
@@ -56,6 +109,19 @@ export function Chat() {
     setInput("");
     setError(null);
     setBusy(true);
+
+    // Count the turn as soon as it is sent — lesson progress measures effort
+    // spoken, not whether the tutor's reply arrived.
+    if (activeLesson) {
+      const entry = recordLessonTurn(activeLesson);
+      if (entry) {
+        setLessonTurns(entry.turns);
+        if (entry.turns === COMPLETE_TURNS) {
+          setCelebrating(true);
+          setEverCompleted(true);
+        }
+      }
+    }
 
     const history = [...messages, { role: "user" as const, content }];
     // Placeholder assistant message; streamed chunks are appended to it.
@@ -82,7 +148,11 @@ export function Chat() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ messages: history, level }),
+        body: JSON.stringify({
+          messages: history,
+          level,
+          ...(activeLesson ? { lessonId: activeLesson } : {}),
+        }),
       });
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
@@ -179,7 +249,25 @@ export function Chat() {
                 ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
                 : `Write something in German — the tutor adapts to your level (${level}) and helps you reach the next one.`}
             </p>
+            {!lesson && !everCompleted && onStartLesson && (
+              <button
+                type="button"
+                onClick={startFirstLesson}
+                className="pressable focus-ring rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm hover:opacity-90"
+              >
+                Start Lesson 1: {lessonsForLevel(level)[0].title}
+              </button>
+            )}
             <div className="flex flex-wrap justify-center gap-2">
+              {lesson?.starter && (
+                <button
+                  type="button"
+                  onClick={() => applySuggestion(lesson.starter as string)}
+                  className="pressable focus-ring rounded-full border border-amber-400 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 hover:shadow-sm dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
+                >
+                  {lesson.starter}
+                </button>
+              )}
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
@@ -203,6 +291,15 @@ export function Chat() {
         {error && <p className="text-center text-sm text-red-500">{error}</p>}
         <div ref={bottomRef} />
       </div>
+
+      {lesson && (
+        <LessonChip
+          lesson={lesson}
+          turns={lessonTurns}
+          celebrating={celebrating}
+          onEnd={() => onEndLesson?.()}
+        />
+      )}
 
       <form
         className="flex items-center gap-2 border-t border-stone-200 px-4 py-3 dark:border-gray-800"
@@ -244,6 +341,66 @@ export function Chat() {
       {panelOpen && (
         <ErrorPanel errors={allErrors} onClose={() => setPanelOpen(false)} />
       )}
+    </div>
+  );
+}
+
+/**
+ * The "you are inside a lesson" bar. Completion turns it green for a few
+ * seconds but never ends the lesson — the learner may well keep talking, and
+ * yanking the focus prompt mid-conversation would be the wrong reward.
+ */
+function LessonChip({
+  lesson,
+  turns,
+  celebrating,
+  onEnd,
+}: {
+  lesson: Lesson;
+  turns: number;
+  celebrating: boolean;
+  onEnd: () => void;
+}) {
+  return (
+    <div
+      className={`animate-message-in flex items-center gap-2 border-t px-4 py-2 text-xs ${
+        celebrating
+          ? "border-green-300 bg-green-50 text-green-900 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200"
+          : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+      }`}
+    >
+      {celebrating ? (
+        <CheckMark className="h-5 w-5" />
+      ) : (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4 shrink-0"
+          aria-hidden="true"
+        >
+          <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 15.5z" />
+          <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5z" />
+        </svg>
+      )}
+      <span className="min-w-0 flex-1 truncate font-medium">
+        {celebrating ? "Lesson complete!" : `Lesson: ${lesson.title}`}
+      </span>
+      <span className="shrink-0 tabular-nums opacity-80">
+        {Math.min(turns, COMPLETE_TURNS)}/{COMPLETE_TURNS}
+      </span>
+      <button
+        type="button"
+        onClick={onEnd}
+        aria-label="End lesson"
+        title="End lesson"
+        className="pressable focus-ring flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10"
+      >
+        ×
+      </button>
     </div>
   );
 }

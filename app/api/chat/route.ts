@@ -1,3 +1,4 @@
+import { getLesson, type Lesson } from "@/lib/curriculum";
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/provider";
 import { isCefrLevel, tutorSystemPrompt, type CefrLevel } from "@/lib/tutor-prompt";
@@ -11,19 +12,29 @@ export const dynamic = "force-dynamic";
 const HISTORY_WINDOW = 10;
 
 /**
- * POST { messages: ChatMessage[], level?: "A1"|"A2"|"B1"|"B2" } → SSE stream.
- * Events: `data: {"text": "..."}` per chunk, `data: [DONE]` at the end,
- * `data: {"error": "..."}` if the provider fails mid-stream.
+ * POST { messages: ChatMessage[], level?: "A1"|"A2"|"B1"|"B2", lessonId?: string }
+ * → SSE stream. Events: `data: {"text": "..."}` per chunk, `data: [DONE]` at
+ * the end, `data: {"error": "..."}` if the provider fails mid-stream.
+ *
+ * The client sends only a lesson *id*; the German instruction that steers the
+ * tutor lives in lib/curriculum.ts and is appended to the system prompt here,
+ * so no prompt text ever crosses the wire from the browser.
  */
 export async function POST(req: Request) {
   let messages: ChatMessage[];
   let level: CefrLevel = "B1";
+  let lesson: Lesson | undefined;
   try {
     const body = await req.json();
     messages = body.messages;
     if (body.level !== undefined) {
       if (!isCefrLevel(body.level)) throw new Error("invalid level");
       level = body.level;
+    }
+    if (body.lessonId !== undefined && body.lessonId !== null) {
+      if (typeof body.lessonId !== "string") throw new Error("invalid lessonId");
+      lesson = getLesson(body.lessonId);
+      if (!lesson) throw new Error("unknown lessonId");
     }
     if (
       !Array.isArray(messages) ||
@@ -45,16 +56,18 @@ export async function POST(req: Request) {
   const provider = getProvider("conversation");
   const windowed = messages.slice(-HISTORY_WINDOW);
   const encoder = new TextEncoder();
+  // Lesson focus goes after the level block so the cacheable static half of
+  // the prompt stays at the front.
+  const systemPrompt = lesson
+    ? `${tutorSystemPrompt(level)}\n\n${lesson.focus}`
+    : tutorSystemPrompt(level);
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (data: string) =>
         controller.enqueue(encoder.encode(`data: ${data}\n\n`));
       try {
-        for await (const chunk of provider.streamChat(
-          tutorSystemPrompt(level),
-          windowed,
-        )) {
+        for await (const chunk of provider.streamChat(systemPrompt, windowed)) {
           send(JSON.stringify({ text: chunk }));
         }
         send("[DONE]");
