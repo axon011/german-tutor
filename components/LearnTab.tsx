@@ -10,6 +10,7 @@ import {
 import { isCompleted, type LessonProgress } from "@/lib/lesson-progress";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { CheckMark } from "./CheckMark";
+import { LEVEL_CHIP } from "./levelStyles";
 import { useLessonProgress } from "./useLessonProgress";
 
 /**
@@ -59,8 +60,14 @@ export function LearnTab({
   return (
     <div className="flex-1 space-y-7 overflow-y-auto px-4 py-6">
       <header>
-        <h2 className="text-sm font-semibold">Your learning path</h2>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-stone-500 dark:text-gray-400">
+        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight">
+          <span
+            aria-hidden="true"
+            className="h-2 w-2 rounded-full bg-emerald-500"
+          />
+          Your learning path
+        </h2>
+        <p className="mt-1 text-xs leading-relaxed text-stone-500 dark:text-zinc-400">
           Pick a lesson and the tutor steers the conversation to that topic and
           its grammar. {LESSONS.length} lessons, A1 to B2.
         </p>
@@ -72,17 +79,19 @@ export function LearnTab({
         return (
           <section key={l}>
             <div className="flex items-center gap-2">
-              <span className="rounded-full bg-amber-400 px-2.5 py-1 text-xs font-medium text-amber-950 shadow-sm">
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-bold ${LEVEL_CHIP[l]}`}
+              >
                 {l}
               </span>
-              <h3 className="flex-1 text-sm font-semibold">{LEVEL_NAMES[l]}</h3>
-              <span className="text-xs tabular-nums text-stone-500 dark:text-gray-400">
+              <h3 className="flex-1 text-sm font-bold">{LEVEL_NAMES[l]}</h3>
+              <span className="text-xs font-semibold tabular-nums text-stone-500 dark:text-zinc-400">
                 {done}/{lessons.length}
               </span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-200 dark:bg-gray-800">
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800">
               <div
-                className="grow-bar h-full rounded-full bg-amber-400 dark:bg-amber-500"
+                className="grow-bar h-full rounded-full bg-emerald-500"
                 style={{
                   width: grown ? `${(done / lessons.length) * 100}%` : "0%",
                 }}
@@ -140,22 +149,22 @@ function LessonRow({
         type="button"
         onClick={() => onStart(lesson)}
         aria-current={isActive ? "true" : undefined}
-        className={`animate-message-in pressable focus-ring flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left ${
+        className={`animate-message-in pressable focus-ring flex w-full items-center gap-3 rounded-2xl border-2 bg-white px-3 py-3 text-left dark:bg-zinc-800/60 ${
           isBeacon
-            ? "border-amber-400 bg-amber-50 dark:border-amber-500/60 dark:bg-amber-500/10"
-            : "border-stone-200 hover:border-amber-400 dark:border-gray-800 dark:hover:border-amber-500"
+            ? "border-emerald-300 bg-emerald-50 dark:border-emerald-500/60 dark:bg-emerald-500/10"
+            : "border-stone-200 hover:border-emerald-300 dark:border-zinc-700 dark:hover:border-emerald-500/60"
         }`}
         style={{ animationDelay: `${Math.min(delayIndex, 12) * 25}ms` }}
       >
         {done ? (
-          <CheckMark className="h-7 w-7" />
+          <CheckMark className="h-8 w-8" tone="gold" />
         ) : (
           <span
             aria-hidden="true"
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums ${
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums ${
               started
-                ? "ring-2 ring-amber-400 text-amber-700 dark:text-amber-300 dark:ring-amber-500"
-                : "border border-stone-300 text-stone-500 dark:border-gray-700 dark:text-gray-400"
+                ? "ring-2 ring-emerald-500 text-emerald-700 dark:text-emerald-300"
+                : "border-2 border-stone-200 text-stone-500 dark:border-zinc-700 dark:text-zinc-400"
             }`}
           >
             {number}
@@ -164,23 +173,25 @@ function LessonRow({
 
         <span className="min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="text-sm font-medium">{lesson.title}</span>
+            <span className="text-sm font-bold">{lesson.title}</span>
             {isBeacon && (
-              <span className="rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-950">
+              <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white dark:bg-emerald-500 dark:text-emerald-950">
                 Start here
               </span>
             )}
           </span>
-          <span className="mt-0.5 block text-[11px] leading-relaxed text-stone-500 dark:text-gray-400">
+          <span className="mt-0.5 block text-[11px] leading-relaxed text-stone-500 dark:text-zinc-400">
             {lesson.description}
           </span>
         </span>
 
+        {/* Not a nested button — the whole row is the click target, so this is
+            styled as the action rather than being one. */}
         <span
-          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+          className={`shrink-0 rounded-2xl px-3.5 py-1.5 text-xs font-semibold ${
             done
-              ? "border border-stone-300 text-stone-600 dark:border-gray-700 dark:text-gray-300"
-              : "bg-amber-400 text-amber-950 shadow-sm"
+              ? "border-2 border-stone-200 text-stone-600 dark:border-zinc-700 dark:text-zinc-300"
+              : "btn-3d btn-3d-primary"
           }`}
         >
           {action}

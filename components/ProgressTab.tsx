@@ -65,8 +65,14 @@ export function ProgressTab({ active }: { active: boolean }) {
 
       {activity.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold">Mistake activity</h2>
-          <p className="mt-0.5 text-[11px] text-stone-500 dark:text-gray-400">
+          <h2 className="flex items-center gap-2 text-base font-bold tracking-tight">
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-amber-400"
+            />
+            Mistake activity
+          </h2>
+          <p className="mt-1 text-[11px] text-stone-500 dark:text-zinc-400">
             Mistakes logged on each of the last {ACTIVITY_DAYS} days.
           </p>
           <div className="mt-3 flex items-center gap-1.5">
@@ -76,7 +82,7 @@ export function ProgressTab({ active }: { active: boolean }) {
                 title={`${day.label}: ${day.count} ${
                   day.count === 1 ? "mistake" : "mistakes"
                 }`}
-                className={`animate-cell-in h-5 flex-1 rounded-[4px] ${
+                className={`animate-cell-in h-6 flex-1 rounded-md ${
                   INTENSITY[intensityStep(day.count)]
                 }`}
                 style={{ animationDelay: `${i * 30}ms` }}
@@ -87,23 +93,29 @@ export function ProgressTab({ active }: { active: boolean }) {
       )}
 
       <section>
-        <h2 className="text-sm font-semibold">Mistakes by type</h2>
+        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight">
+          <span
+            aria-hidden="true"
+            className="h-2 w-2 rounded-full bg-emerald-500"
+          />
+          Mistakes by type
+        </h2>
         <div className="mt-3 space-y-2.5">
           {ERROR_TYPES.map((type, i) => (
             <div key={type} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 text-xs text-stone-600 dark:text-gray-300">
+              <span className="w-28 shrink-0 text-xs font-medium text-stone-600 dark:text-zinc-300">
                 {TYPE_LABELS[type].label}
               </span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200 dark:bg-gray-800">
+              <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800">
                 <div
-                  className="grow-bar h-full rounded-full bg-amber-400 dark:bg-amber-500"
+                  className="grow-bar h-full rounded-full bg-emerald-500"
                   style={{
                     width: grown ? `${(counts[type] / max) * 100}%` : "0%",
                     transitionDelay: `${i * 60}ms`,
                   }}
                 />
               </div>
-              <span className="w-6 shrink-0 text-right text-xs tabular-nums text-stone-500 dark:text-gray-400">
+              <span className="w-6 shrink-0 text-right text-xs font-semibold tabular-nums text-stone-500 dark:text-zinc-400">
                 {counts[type]}
               </span>
             </div>
@@ -112,9 +124,12 @@ export function ProgressTab({ active }: { active: boolean }) {
       </section>
 
       <section>
-        <h2 className="text-sm font-semibold">Recent mistakes</h2>
+        <h2 className="flex items-center gap-2 text-base font-bold tracking-tight">
+          <span aria-hidden="true" className="h-2 w-2 rounded-full bg-red-400" />
+          Recent mistakes
+        </h2>
         {recent.length === 0 ? (
-          <p className="mt-2 text-sm text-stone-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-stone-500 dark:text-zinc-400">
             No mistakes recorded yet.
           </p>
         ) : (
@@ -122,7 +137,7 @@ export function ProgressTab({ active }: { active: boolean }) {
             {recent.map((r, i) => (
               <div
                 key={`${r.ts}-${i}`}
-                className="rounded-xl border border-stone-200 px-3 py-2 dark:border-gray-800"
+                className="rounded-2xl border-2 border-stone-200 bg-white px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-800/60"
               >
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <span className="text-red-700 line-through dark:text-red-300">
@@ -130,16 +145,16 @@ export function ProgressTab({ active }: { active: boolean }) {
                   </span>
                   <span
                     aria-hidden="true"
-                    className="text-stone-400 dark:text-gray-500"
+                    className="text-stone-400 dark:text-zinc-500"
                   >
                     →
                   </span>
-                  <span className="font-medium text-green-700 dark:text-green-300">
+                  <span className="font-semibold text-green-700 dark:text-green-300">
                     {r.correction}
                   </span>
                   <TypeChip type={r.type} />
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-gray-400">
+                <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-zinc-400">
                   {r.explanation}
                 </p>
               </div>
@@ -153,19 +168,19 @@ export function ProgressTab({ active }: { active: boolean }) {
 
 function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
   return (
-    // The 1px gradient wrapper IS the border — a plain border can't animate a
-    // travelling highlight. Purely decorative, so it stops under reduced motion.
-    <div className="shimmer-border rounded-2xl p-px">
+    // The 2px gradient wrapper IS the border — a plain border can't animate a
+    // travelling highlight, and it now pans in the hero's emerald.
+    <div className="shimmer-border rounded-2xl p-0.5">
       {/* Opaque in both themes: a translucent fill would let the panning
         gradient wash the whole card instead of just its edge. */}
-      <section className="rounded-[15px] bg-amber-50 px-4 py-4 dark:bg-[#1a1611]">
+      <section className="rounded-[14px] bg-emerald-50 px-4 py-4 dark:bg-[#10231b]">
         <div className="flex items-center gap-2.5">
-          <LogoMark className="h-8 w-8 text-xs" />
+          <LogoMark className="h-9 w-9 text-sm" />
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
               Practice today
             </p>
-            <h2 className="text-sm font-semibold">
+            <h2 className="text-sm font-bold">
               {focus
                 ? `Your focus today: ${TYPE_LABELS[focus.type].label}`
                 : "Your focus is coming soon"}
@@ -175,13 +190,13 @@ function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
 
         {focus ? (
           <>
-            <p className="mt-3 text-sm text-stone-700 dark:text-gray-200">
-              <strong className="font-semibold">
+            <p className="mt-3 text-sm text-stone-700 dark:text-zinc-200">
+              <strong className="font-bold">
                 {Math.round(focus.share * 100)}%
               </strong>{" "}
               of your recent errors ({focus.count} in total).
             </p>
-            <p className="mt-1.5 text-sm leading-relaxed text-stone-700 dark:text-gray-200">
+            <p className="mt-1.5 text-sm leading-relaxed text-stone-700 dark:text-zinc-200">
               {TYPE_LABELS[focus.type].tip}
             </p>
             {focus.examples.length > 0 && (
@@ -196,11 +211,11 @@ function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
                     </span>
                     <span
                       aria-hidden="true"
-                      className="text-stone-500 dark:text-gray-400"
+                      className="text-stone-500 dark:text-zinc-400"
                     >
                       →
                     </span>
-                    <span className="font-medium text-green-700 dark:text-green-300">
+                    <span className="font-semibold text-green-700 dark:text-green-300">
                       {e.correction}
                     </span>
                   </li>
@@ -209,7 +224,7 @@ function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
             )}
           </>
         ) : (
-          <p className="mt-3 text-sm leading-relaxed text-stone-700 dark:text-gray-200">
+          <p className="mt-3 text-sm leading-relaxed text-stone-700 dark:text-zinc-200">
             Not enough data yet — after a few conversations your personal focus
             appears here.
           </p>
@@ -221,11 +236,9 @@ function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-stone-200 px-3 py-2.5 text-center dark:border-gray-800">
-      <p className="text-base font-semibold leading-tight tabular-nums">
-        {value}
-      </p>
-      <p className="mt-0.5 text-[11px] leading-tight text-stone-500 dark:text-gray-400">
+    <div className="pressable rounded-2xl border-2 border-stone-200 bg-white px-3 py-3 text-center hover:border-emerald-300 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:border-emerald-500/60">
+      <p className="text-lg font-bold leading-tight tabular-nums">{value}</p>
+      <p className="mt-0.5 text-[11px] leading-tight text-stone-500 dark:text-zinc-400">
         {label}
       </p>
     </div>
@@ -245,9 +258,10 @@ function CountTile({
   return <Tile label={label} value={String(shown)} />;
 }
 
-/** Muted track, then three amber steps. Dark variants stay legible on #0b0b0d. */
+/** Muted track, then three gold steps — activity is a brand moment, not a
+ *  primary action, so it keeps the German-flag gold. */
 const INTENSITY = [
-  "bg-stone-200 dark:bg-gray-800",
+  "bg-stone-200 dark:bg-zinc-800",
   "bg-amber-200 dark:bg-amber-900",
   "bg-amber-400 dark:bg-amber-600",
   "bg-amber-600 dark:bg-amber-400",

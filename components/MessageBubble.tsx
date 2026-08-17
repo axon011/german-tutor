@@ -34,10 +34,10 @@ export function MessageBubble({
       >
         {!isUser && <LogoMark className="h-7 w-7 text-[10px]" />}
         <div
-          className={`whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm leading-relaxed ${
+          className={`whitespace-pre-wrap rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed ${
             isUser
-              ? "rounded-br-sm bg-slate-800 text-white dark:bg-indigo-500 dark:text-white"
-              : "rounded-bl-sm bg-stone-100 text-stone-900 dark:bg-gray-800 dark:text-gray-100"
+              ? "rounded-br-md bg-emerald-700 text-white dark:bg-emerald-600"
+              : "rounded-bl-md bg-stone-100 text-stone-900 dark:bg-zinc-800 dark:text-zinc-100"
           }`}
         >
           {segments
@@ -72,23 +72,23 @@ export function MessageBubble({
       </div>
 
       {open && (
-        <div className="max-w-[80%] rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div className="max-w-[80%] rounded-2xl border-2 border-stone-200 bg-white px-3 py-2.5 text-xs shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-red-700 line-through dark:text-red-300">
               {open.span}
             </span>
             <span
               aria-hidden="true"
-              className="text-stone-400 dark:text-gray-500"
+              className="text-stone-400 dark:text-zinc-500"
             >
               →
             </span>
-            <span className="font-medium text-green-700 dark:text-green-300">
+            <span className="font-semibold text-green-700 dark:text-green-300">
               {open.correction}
             </span>
             <TypeChip type={open.type} />
           </div>
-          <p className="mt-1 leading-relaxed text-stone-600 dark:text-gray-400">
+          <p className="mt-1 leading-relaxed text-stone-600 dark:text-zinc-400">
             {open.explanation}
           </p>
         </div>
@@ -99,7 +99,7 @@ export function MessageBubble({
 
 export function TypeChip({ type }: { type: CorrectionError["type"] }) {
   return (
-    <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:bg-gray-800 dark:text-gray-400">
+    <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 dark:bg-zinc-700 dark:text-zinc-300">
       {type}
     </span>
   );

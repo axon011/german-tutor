@@ -13,6 +13,7 @@ import {
   recordLessonTurn,
 } from "@/lib/lesson-progress";
 import { CheckMark } from "./CheckMark";
+import { LEVEL_CHIP } from "./levelStyles";
 import { LogoMark } from "./LogoMark";
 import { MessageBubble, TypeChip } from "./MessageBubble";
 
@@ -195,11 +196,11 @@ export function Chat({
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 px-3 py-2 sm:px-4 dark:border-gray-800">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-stone-200 px-4 py-2 dark:border-zinc-800">
         <div
           role="group"
           aria-label="My level"
-          className="flex items-center gap-0.5 rounded-full bg-stone-100 p-0.5 dark:bg-gray-800"
+          className="flex items-center gap-1 rounded-full bg-stone-100 p-1 dark:bg-zinc-800"
         >
           {CEFR_LEVELS.map((l) => {
             const active = l === level;
@@ -209,10 +210,10 @@ export function Chat({
                 type="button"
                 aria-pressed={active}
                 onClick={() => changeLevel(l)}
-                className={`pressable focus-ring rounded-full px-2.5 py-1 text-xs font-medium ${
+                className={`pressable focus-ring rounded-full px-2.5 py-1 text-xs font-bold ${
                   active
-                    ? "bg-amber-400 text-amber-950 shadow-sm"
-                    : "text-stone-600 hover:text-stone-900 dark:text-gray-400 dark:hover:text-gray-100"
+                    ? `${LEVEL_CHIP[l]} shadow-sm`
+                    : "text-stone-600 hover:text-stone-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 }`}
               >
                 {l}
@@ -225,14 +226,14 @@ export function Chat({
             type="button"
             onClick={() => setPanelOpen((o) => !o)}
             aria-expanded={panelOpen}
-            className="pressable focus-ring flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1 text-xs font-medium text-stone-600 hover:border-amber-400 hover:text-stone-900 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+            className="pressable focus-ring flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-3 py-1 text-xs font-semibold text-stone-600 hover:border-emerald-300 hover:text-stone-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-emerald-500/60 dark:hover:text-zinc-50"
           >
             Mistakes
             {/* Keying on the count remounts the span, which is what restarts
                 the bounce every time a new mistake is logged. */}
             <span
               key={allErrors.length}
-              className="animate-badge-bounce inline-block rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300"
+              className="animate-badge-bounce inline-block rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-500/20 dark:text-red-300"
             >
               {allErrors.length}
             </span>
@@ -243,11 +244,11 @@ export function Chat({
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
           <div className="flex flex-col items-center gap-4 pt-10 text-center">
-            <LogoMark className="h-12 w-12 text-base" />
-            <h2 className="text-base font-semibold">
+            <LogoMark className="h-14 w-14 text-lg" />
+            <h2 className="text-lg font-bold tracking-tight">
               Hello! Let&apos;s speak German.
             </h2>
-            <p className="max-w-md text-sm text-stone-500 dark:text-gray-400">
+            <p className="max-w-md text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
               {level === "A1"
                 ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
                 : `Write something in German — the tutor adapts to your level (${level}) and helps you reach the next one.`}
@@ -256,7 +257,7 @@ export function Chat({
               <button
                 type="button"
                 onClick={startFirstLesson}
-                className="pressable focus-ring rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-4 py-2 text-sm font-semibold text-amber-950 shadow-sm hover:opacity-90"
+                className="btn-3d btn-3d-primary focus-ring px-5 py-2.5 text-sm"
               >
                 Start Lesson 1: {lessonsForLevel(level)[0].title}
               </button>
@@ -266,7 +267,7 @@ export function Chat({
                 <button
                   type="button"
                   onClick={() => applySuggestion(focus.starter as string)}
-                  className="pressable focus-ring rounded-full border border-amber-400 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 hover:shadow-sm dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
+                  className="pressable focus-ring rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-900 hover:shadow-sm dark:border-emerald-500/50 dark:bg-emerald-500/10 dark:text-emerald-200"
                 >
                   {focus.starter}
                 </button>
@@ -276,7 +277,7 @@ export function Chat({
                   key={s}
                   type="button"
                   onClick={() => applySuggestion(s)}
-                  className="pressable focus-ring rounded-full border border-stone-300 px-3 py-1.5 text-xs text-stone-600 hover:border-amber-400 hover:text-stone-900 hover:shadow-sm dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+                  className="pressable focus-ring rounded-2xl border-2 border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-600 hover:border-emerald-300 hover:text-stone-900 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-emerald-500/60 dark:hover:text-zinc-50"
                 >
                   {s}
                 </button>
@@ -305,7 +306,7 @@ export function Chat({
       )}
 
       <form
-        className="flex items-center gap-2 border-t border-stone-200 px-4 py-3 dark:border-gray-800"
+        className="flex items-center gap-2 border-t-2 border-stone-200 px-4 py-3 dark:border-zinc-800"
         onSubmit={(e) => {
           e.preventDefault();
           send();
@@ -313,7 +314,7 @@ export function Chat({
       >
         <input
           ref={inputRef}
-          className="flex-1 rounded-full border border-stone-300 bg-white/70 px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/50 dark:border-gray-700 dark:bg-gray-900/60 dark:placeholder:text-gray-500 dark:focus:border-amber-500 dark:focus:ring-amber-500/30"
+          className="field flex-1 px-4 py-3 text-[15px]"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Write in German…"
@@ -324,10 +325,10 @@ export function Chat({
           type="submit"
           disabled={busy || !input.trim()}
           aria-label="Send"
-          className="pressable focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 hover:opacity-90 disabled:opacity-40"
+          className="btn-3d btn-3d-primary focus-ring flex h-12 w-12 shrink-0 items-center justify-center"
         >
           {busy ? (
-            <span className="animate-button-spin h-4 w-4 rounded-full border-2 border-amber-950/30 border-t-amber-950" />
+            <span className="animate-button-spin h-4 w-4 rounded-full border-2 border-current border-t-transparent opacity-80" />
           ) : (
             <svg
               viewBox="0 0 24 24"
@@ -368,14 +369,14 @@ function FocusChip({
   const grammar = focus.kind === "grammar";
   return (
     <div
-      className={`animate-message-in flex items-center gap-2 border-t px-4 py-2 text-xs ${
+      className={`animate-message-in flex items-center gap-2 border-t-2 px-4 py-2.5 text-xs ${
         celebrating
-          ? "border-green-300 bg-green-50 text-green-900 dark:border-green-500/40 dark:bg-green-500/10 dark:text-green-200"
-          : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+          ? "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+          : "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200"
       }`}
     >
       {celebrating ? (
-        <CheckMark className="h-5 w-5" />
+        <CheckMark className="h-5 w-5" tone="gold" />
       ) : (
         <svg
           viewBox="0 0 24 24"
@@ -391,7 +392,7 @@ function FocusChip({
           <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5z" />
         </svg>
       )}
-      <span className="min-w-0 flex-1 truncate font-medium">
+      <span className="min-w-0 flex-1 truncate font-semibold">
         {celebrating
           ? grammar
             ? "Rule practised!"
@@ -427,33 +428,33 @@ function ErrorPanel({
         type="button"
         aria-label="Close the mistake list"
         onClick={onClose}
-        className="absolute inset-0 z-20 cursor-default bg-stone-900/20 dark:bg-black/40"
+        className="absolute inset-0 z-20 cursor-default bg-stone-900/25 dark:bg-black/50"
       />
       <aside
         aria-label="Your mistakes"
-        className="animate-message-in absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-stone-200 bg-white shadow-xl sm:w-80 dark:border-gray-800 dark:bg-gray-950"
+        className="animate-message-in absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l-2 border-stone-200 bg-white shadow-xl sm:w-80 dark:border-zinc-700 dark:bg-zinc-800"
       >
-        <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-gray-800">
-          <h2 className="text-sm font-semibold">Your mistakes</h2>
+        <div className="flex items-center justify-between border-b-2 border-stone-200 px-4 py-3 dark:border-zinc-700">
+          <h2 className="text-sm font-bold">Your mistakes</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="pressable focus-ring flex h-7 w-7 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="pressable focus-ring flex h-8 w-8 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
           >
             ×
           </button>
         </div>
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
           {errors.length === 0 ? (
-            <p className="text-sm text-stone-500 dark:text-gray-400">
+            <p className="text-sm text-stone-500 dark:text-zinc-400">
               No mistakes yet — keep it up!
             </p>
           ) : (
             errors.map((e, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-stone-200 px-3 py-2 dark:border-gray-800"
+                className="rounded-2xl border-2 border-stone-200 px-3 py-2.5 dark:border-zinc-700"
               >
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <span className="text-red-700 line-through dark:text-red-300">
@@ -461,16 +462,16 @@ function ErrorPanel({
                   </span>
                   <span
                     aria-hidden="true"
-                    className="text-stone-400 dark:text-gray-500"
+                    className="text-stone-400 dark:text-zinc-500"
                   >
                     →
                   </span>
-                  <span className="font-medium text-green-700 dark:text-green-300">
+                  <span className="font-semibold text-green-700 dark:text-green-300">
                     {e.correction}
                   </span>
                   <TypeChip type={e.type} />
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-gray-400">
+                <p className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-zinc-400">
                   {e.explanation}
                 </p>
               </div>
@@ -487,14 +488,14 @@ function TypingIndicator() {
     <div className="animate-message-in flex items-end gap-2">
       <LogoMark className="h-7 w-7 text-[10px]" />
       <div
-        className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-3 dark:bg-gray-800"
+        className="flex items-center gap-1 rounded-3xl rounded-bl-md bg-stone-100 px-4 py-3.5 dark:bg-zinc-800"
         role="status"
         aria-label="The tutor is typing…"
       >
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="animate-typing-dot h-1.5 w-1.5 rounded-full bg-stone-400 dark:bg-gray-500"
+            className="animate-typing-dot h-1.5 w-1.5 rounded-full bg-stone-400 dark:bg-zinc-500"
             style={{ animationDelay: `${i * 150}ms` }}
           />
         ))}

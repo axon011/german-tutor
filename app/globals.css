@@ -1,11 +1,41 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+ * Palette. Every colour the chrome uses is a token here, so the whole app can
+ * be re-hued by editing this block alone.
+ *
+ * Light is the primary design target; dark redefines the same names.
+ *
+ * Emerald is the HERO — primary actions, active navigation, focus rings, the
+ * learner's own chat bubbles, progress fills. Gold is BRAND only: the logo
+ * mark, the tricolor rule, completion and streak moments.
+ * ------------------------------------------------------------------------- */
+
 :root {
-  --background: #fdfcfa;
-  --foreground: #1c1917;
-  /* Warm radial tint behind the chat card. */
-  --page-tint-a: rgba(251, 191, 36, 0.14);
-  --page-tint-b: rgba(120, 113, 108, 0.08);
+  /* Surfaces and text */
+  --background: #fafaf9; /* stone-50 */
+  --foreground: #1c1917; /* stone-900 */
+  --surface: #ffffff;
+  --surface-muted: #f5f5f4; /* stone-100 */
+  --line: #e7e5e4; /* stone-200 */
+  --muted: #57534e; /* stone-600 */
+
+  /* Hero — emerald.
+   * `accent` is for graphics (fills, borders, rings) where 3:1 is the bar.
+   * `accent-strong` is for fills that carry text: white on #047857 is 5.5:1. */
+  --accent-bright: #10b981; /* emerald-500 — meters, indicators */
+  --accent: #059669; /* emerald-600 — borders, rings, graphics */
+  --accent-strong: #047857; /* emerald-700 — text-bearing fills */
+  --accent-soft: #ecfdf5; /* emerald-50 */
+
+  /* The 3D button stack: face, hover face, bottom edge, label. */
+  --btn-face: #047857; /* emerald-700 */
+  --btn-face-hover: #065f46; /* emerald-800 */
+  --btn-edge: #064e3b; /* emerald-900 */
+  --btn-label: #ffffff;
+
+  --ring: #059669;
+
   /* German flag, adjusted per theme so the black band stays visible. */
   --flag-black: #000000;
   --flag-red: #dd0000;
@@ -21,12 +51,28 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0b0b0d;
-    --foreground: #ededed;
-    --page-tint-a: rgba(180, 120, 20, 0.16);
-    --page-tint-b: rgba(30, 41, 59, 0.55);
-    /* Pure black would vanish against the dark card. */
-    --flag-black: #57534e;
+    --background: #18181b; /* zinc-900 */
+    --foreground: #fafafa;
+    --surface: #27272a; /* zinc-800 */
+    --surface-muted: #27272a;
+    --line: #3f3f46; /* zinc-700 */
+    --muted: #a1a1aa; /* zinc-400 */
+
+    --accent-bright: #34d399; /* emerald-400 */
+    --accent: #10b981; /* emerald-500 */
+    --accent-strong: #10b981;
+    --accent-soft: rgba(16, 185, 129, 0.12);
+
+    /* Bright face, near-black-green label: 5.8:1 and far more alive on dark. */
+    --btn-face: #10b981; /* emerald-500 */
+    --btn-face-hover: #34d399; /* emerald-400 */
+    --btn-edge: #047857; /* emerald-700 */
+    --btn-label: #022c22; /* emerald-950 */
+
+    --ring: #34d399;
+
+    /* Pure black would vanish against the dark page. */
+    --flag-black: #52525b;
   }
 }
 
@@ -36,26 +82,11 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Page backdrop: subtle warm radial wash over the flat background. */
-.app-backdrop {
-  background-image:
-    radial-gradient(
-      60rem 32rem at 50% -8rem,
-      var(--page-tint-a),
-      transparent 70%
-    ),
-    radial-gradient(
-      48rem 40rem at 100% 100%,
-      var(--page-tint-b),
-      transparent 70%
-    );
-}
-
 /* ---------------------------------------------------------------------------
  * Brand
  * ------------------------------------------------------------------------- */
 
-/* Tricolor rule across the top of the card: three hard-edged equal thirds. */
+/* Tricolor rule across the very top of the viewport: three hard-edged thirds. */
 .brand-stripe {
   background-image: linear-gradient(
     to right,
@@ -92,9 +123,10 @@ body {
  * Shared interaction primitives
  * ------------------------------------------------------------------------- */
 
-/* One press affordance for every button-ish control. The property list also
- * covers what `transition-colors`/`transition-opacity` used to do, since this
- * rule wins over them. */
+/* The subtle press affordance — chips, cards, icon buttons, tabs. Primary
+ * actions use `.btn-3d` instead. The property list also covers what
+ * `transition-colors`/`transition-opacity` used to do, since this rule wins
+ * over them. */
 .pressable {
   transition:
     transform 120ms ease-out,
@@ -113,10 +145,75 @@ body {
   transform: scale(0.96);
 }
 
+/* The chunky primary action: a solid darker bottom edge that the button sinks
+ * into when pressed. Padding and text size stay with the caller; everything
+ * that makes it a 3D button lives here.
+ *
+ * The 3px translate on press exactly consumes the 4px edge minus the 1px the
+ * border still paints, so the button's top edge is what appears to move. */
+.btn-3d {
+  border-radius: 1rem;
+  font-weight: 600;
+  border-bottom-width: 4px;
+  border-bottom-style: solid;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    transform 80ms ease-out,
+    opacity 120ms ease-out;
+}
+
+.btn-3d:active:not(:disabled) {
+  border-bottom-width: 0;
+  transform: translateY(3px);
+  margin-bottom: 4px;
+}
+
+.btn-3d:disabled {
+  opacity: 0.4;
+}
+
+/* Primary (emerald) variant. */
+.btn-3d-primary {
+  background-color: var(--btn-face);
+  border-bottom-color: var(--btn-edge);
+  color: var(--btn-label);
+}
+
+.btn-3d-primary:hover:not(:disabled) {
+  background-color: var(--btn-face-hover);
+}
+
 /* The single focus treatment used everywhere. */
 .focus-ring:focus-visible {
-  outline: 2px solid #f59e0b;
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+/* Text inputs: big, rounded, 2px border, emerald focus. */
+.field {
+  border-radius: 1rem;
+  border: 2px solid var(--line);
+  background-color: var(--surface);
+  color: var(--foreground);
+  outline: none;
+  transition:
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.field::placeholder {
+  color: var(--muted);
+  opacity: 0.7;
+}
+
+.field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.field:disabled {
+  opacity: 0.6;
 }
 
 /* Meter fills that animate from 0 on activation. */
@@ -198,7 +295,7 @@ body {
   animation: slide-in 200ms ease-out both;
 }
 
-/* A detail sheet takes over the card, rising from the bottom edge. */
+/* A detail sheet takes over the panel, rising from the bottom edge. */
 @keyframes sheet-up {
   from {
     opacity: 0;
@@ -315,11 +412,11 @@ body {
 .shimmer-border {
   background-image: linear-gradient(
     110deg,
-    rgba(245, 158, 11, 0.55) 0%,
-    rgba(245, 158, 11, 0.18) 25%,
-    rgba(251, 191, 36, 0.9) 50%,
-    rgba(245, 158, 11, 0.18) 75%,
-    rgba(245, 158, 11, 0.55) 100%
+    rgba(5, 150, 105, 0.55) 0%,
+    rgba(5, 150, 105, 0.18) 25%,
+    rgba(52, 211, 153, 0.9) 50%,
+    rgba(5, 150, 105, 0.18) 75%,
+    rgba(5, 150, 105, 0.55) 100%
   );
   background-size: 300% 100%;
   animation: shimmer-pan 8s linear infinite;
@@ -358,12 +455,19 @@ body {
   .pressable,
   .tab-pill,
   .grow-bar,
-  .grow-bar-fast {
+  .grow-bar-fast,
+  .btn-3d,
+  .field {
     transition: none;
   }
 
   .pressable:hover:not(:disabled),
   .pressable:active:not(:disabled) {
     transform: none;
+  }
+
+  /* The press still sinks — that is feedback, not decoration — but instantly. */
+  .btn-3d:active:not(:disabled) {
+    transition: none;
   }
 }

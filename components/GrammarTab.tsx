@@ -11,6 +11,7 @@ import {
 import { isCompleted, type LessonProgress } from "@/lib/lesson-progress";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { CheckMark } from "./CheckMark";
+import { LEVEL_CHIP } from "./levelStyles";
 import { useLessonProgress } from "./useLessonProgress";
 
 type LevelFilter = "All" | CefrLevel;
@@ -74,24 +75,28 @@ export function GrammarTab({
 
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-2 border-b border-stone-200 px-3 py-2 sm:px-4 dark:border-gray-800">
+      <div className="flex flex-wrap items-center gap-2 border-b-2 border-stone-200 px-4 py-2 dark:border-zinc-800">
         <div
           role="group"
           aria-label="Filter by level"
-          className="flex items-center gap-0.5 rounded-full bg-stone-100 p-0.5 dark:bg-gray-800"
+          className="flex items-center gap-1 rounded-full bg-stone-100 p-1 dark:bg-zinc-800"
         >
           {LEVEL_FILTERS.map((f) => {
             const on = f === level;
+            const active =
+              f === "All"
+                ? "bg-emerald-700 text-white dark:bg-emerald-500 dark:text-emerald-950"
+                : LEVEL_CHIP[f];
             return (
               <button
                 key={f}
                 type="button"
                 aria-pressed={on}
                 onClick={() => setLevel(f)}
-                className={`pressable focus-ring rounded-full px-2.5 py-1 text-xs font-medium ${
+                className={`pressable focus-ring rounded-full px-2.5 py-1 text-xs font-bold ${
                   on
-                    ? "bg-amber-400 text-amber-950 shadow-sm"
-                    : "text-stone-600 hover:text-stone-900 dark:text-gray-400 dark:hover:text-gray-100"
+                    ? `${active} shadow-sm`
+                    : "text-stone-600 hover:text-stone-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                 }`}
               >
                 {f}
@@ -105,7 +110,7 @@ export function GrammarTab({
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search rules…"
           aria-label="Search grammar rules"
-          className="min-w-0 flex-1 rounded-full border border-stone-300 bg-white/70 px-3.5 py-1.5 text-xs outline-none transition-colors placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/50 dark:border-gray-700 dark:bg-gray-900/60 dark:placeholder:text-gray-500 dark:focus:border-amber-500 dark:focus:ring-amber-500/30"
+          className="field min-w-0 flex-1 px-3.5 py-2 text-xs"
         />
         <div
           role="group"
@@ -121,16 +126,16 @@ export function GrammarTab({
                 type="button"
                 aria-pressed={on}
                 onClick={() => setCategory(c)}
-                className={`pressable focus-ring flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                className={`pressable focus-ring flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-[11px] font-semibold ${
                   on
-                    ? "border-stone-400 bg-stone-100 text-stone-900 dark:border-gray-500 dark:bg-gray-800 dark:text-gray-100"
-                    : "border-stone-200 text-stone-600 hover:text-stone-900 dark:border-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                    ? "border-emerald-400 bg-emerald-50 text-emerald-900 dark:border-emerald-500/60 dark:bg-emerald-500/10 dark:text-emerald-200"
+                    : "border-stone-200 text-stone-600 hover:border-emerald-300 hover:text-stone-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
                 }`}
               >
                 <span
                   aria-hidden="true"
                   className={`h-1.5 w-1.5 rounded-full ${
-                    meta ? meta.dot : "bg-stone-400 dark:bg-gray-500"
+                    meta ? meta.dot : "bg-stone-400 dark:bg-zinc-500"
                   }`}
                 />
                 {meta ? meta.label : "All"}
@@ -142,8 +147,14 @@ export function GrammarTab({
 
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <header>
-          <h2 className="text-sm font-semibold">Grammar rulebook</h2>
-          <p className="mt-0.5 text-[11px] leading-relaxed text-stone-500 dark:text-gray-400">
+          <h2 className="flex items-center gap-2 text-base font-bold tracking-tight">
+            <span
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-emerald-500"
+            />
+            Grammar rulebook
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-stone-500 dark:text-zinc-400">
             {GRAMMAR_TOPICS.length} rules from A1 to B2, explained in English
             with German examples. Open a rule to read it, or practise it in a
             real conversation.
@@ -151,7 +162,7 @@ export function GrammarTab({
         </header>
 
         {topics.length === 0 ? (
-          <p className="pt-10 text-center text-sm text-stone-500 dark:text-gray-400">
+          <p className="pt-10 text-center text-sm text-stone-500 dark:text-zinc-400">
             {needle ? (
               <>
                 No rule matches “{query.trim()}”. Try a shorter word, or a
@@ -213,8 +224,8 @@ function TopicCard({
       <button
         type="button"
         onClick={onOpen}
-        className={`pressable focus-ring flex h-full w-full flex-col gap-3 rounded-xl border p-3 text-left ${meta.card} ${
-          isActive ? "ring-2 ring-amber-400 dark:ring-amber-500" : ""
+        className={`pressable focus-ring flex h-full w-full flex-col gap-3 rounded-2xl border-2 p-3 text-left ${meta.card} ${
+          isActive ? "ring-2 ring-emerald-500" : ""
         }`}
       >
         <span className="flex w-full items-start justify-between gap-2">
@@ -224,17 +235,17 @@ function TopicCard({
             {topic.glyph}
           </span>
           <span className="flex shrink-0 items-center gap-1">
-            {done && <CheckMark className="h-4 w-4" />}
-            <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[10px] font-semibold text-stone-700 dark:bg-white/10 dark:text-gray-200">
+            {done && <CheckMark className="h-4 w-4" tone="gold" />}
+            <span className="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-bold text-stone-700 dark:bg-white/10 dark:text-zinc-200">
               {topic.level}
             </span>
           </span>
         </span>
         <span className="mt-auto block min-w-0">
-          <span className="block text-sm leading-snug font-semibold">
+          <span className="block text-sm leading-snug font-bold">
             {topic.title}
           </span>
-          <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-stone-600 dark:text-gray-400">
+          <span className="mt-0.5 line-clamp-2 block text-xs leading-relaxed text-stone-600 dark:text-zinc-400">
             {topic.summary}
           </span>
         </span>
@@ -285,7 +296,7 @@ function DetailSheet({
       <button
         type="button"
         onClick={onClose}
-        className="animate-message-in absolute inset-0 cursor-default bg-stone-900/25 backdrop-blur-[2px] dark:bg-black/50"
+        className="animate-message-in absolute inset-0 cursor-default bg-stone-900/30 backdrop-blur-[2px] dark:bg-black/55"
       >
         <span className="sr-only">Close</span>
       </button>
@@ -294,9 +305,9 @@ function DetailSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="animate-sheet-up relative flex max-h-[94%] min-h-0 flex-col rounded-t-2xl border-t border-stone-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950"
+        className="animate-sheet-up relative flex max-h-[94%] min-h-0 flex-col rounded-t-3xl border-t-2 border-stone-200 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-800"
       >
-        <div className="flex shrink-0 items-start gap-3 border-b border-stone-200 px-4 pt-4 pb-3 dark:border-gray-800">
+        <div className="flex shrink-0 items-start gap-3 border-b-2 border-stone-200 px-4 pt-4 pb-3 dark:border-zinc-700">
           <div className="min-w-0 flex-1">
             <p
               className={`text-2xl leading-tight font-bold break-words ${meta.accent}`}
@@ -305,17 +316,19 @@ function DetailSheet({
             </p>
             <h3
               id={titleId}
-              className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold"
+              className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-base font-bold tracking-tight"
             >
               {topic.title}
-              {done && <CheckMark className="h-4 w-4" />}
+              {done && <CheckMark className="h-4 w-4" tone="gold" />}
             </h3>
             <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold text-amber-950">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${LEVEL_CHIP[topic.level]}`}
+              >
                 {topic.level}
               </span>
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${meta.chip}`}
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.chip}`}
               >
                 {meta.label}
               </span>
@@ -326,7 +339,7 @@ function DetailSheet({
             type="button"
             onClick={onClose}
             aria-label="Close rule"
-            className="pressable focus-ring -mt-1 -mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="pressable focus-ring -mt-1 -mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
           >
             <svg
               viewBox="0 0 24 24"
@@ -347,7 +360,7 @@ function DetailSheet({
             {topic.explanation.map((paragraph, i) => (
               <p
                 key={i}
-                className="text-xs leading-relaxed text-stone-600 dark:text-gray-300"
+                className="text-[13px] leading-relaxed text-stone-600 dark:text-zinc-300"
               >
                 {paragraph}
               </p>
@@ -358,12 +371,12 @@ function DetailSheet({
             {topic.examples.map((ex, i) => (
               <li
                 key={i}
-                className="rounded-lg bg-stone-50 px-3 py-2 dark:bg-gray-900/60"
+                className="rounded-xl border-2 border-stone-200 bg-stone-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900/60"
               >
-                <p className="text-sm leading-relaxed">
+                <p className="text-[15px] leading-relaxed">
                   <MarkedGerman text={ex.de} markClass={meta.mark} />
                 </p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-stone-500 dark:text-gray-400">
+                <p className="mt-0.5 text-[11px] leading-relaxed text-stone-500 dark:text-zinc-400">
                   {ex.en}
                 </p>
               </li>
@@ -374,18 +387,18 @@ function DetailSheet({
         </div>
 
         {topic.focus && (
-          <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-stone-200 px-4 py-3 dark:border-gray-800">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 border-t-2 border-stone-200 px-4 py-3 dark:border-zinc-700">
             <button
               type="button"
               onClick={() => {
                 onPractice(topic.id);
                 onClose();
               }}
-              className="pressable focus-ring rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-3.5 py-1.5 text-xs font-semibold text-amber-950 shadow-sm hover:opacity-90"
+              className="btn-3d btn-3d-primary focus-ring px-4 py-2 text-xs"
             >
               Practice in chat
             </button>
-            <span className="text-[11px] text-stone-500 dark:text-gray-400">
+            <span className="text-[11px] text-stone-500 dark:text-zinc-400">
               The tutor steers the conversation to this rule.
             </span>
           </div>
@@ -425,18 +438,18 @@ function MarkedGerman({
 function RuleTable({ table }: { table: NonNullable<GrammarTopic["table"]> }) {
   return (
     <figure className="space-y-1.5">
-      <figcaption className="text-[11px] font-medium text-stone-500 dark:text-gray-400">
+      <figcaption className="text-[11px] font-semibold text-stone-500 dark:text-zinc-400">
         {table.caption}
       </figcaption>
-      <div className="overflow-x-auto rounded-lg border border-stone-200 dark:border-gray-800">
+      <div className="overflow-x-auto rounded-xl border-2 border-stone-200 dark:border-zinc-700">
         <table className="w-full border-collapse text-left text-xs">
           <thead>
-            <tr className="bg-stone-50 dark:bg-gray-900/60">
+            <tr className="bg-stone-50 dark:bg-zinc-900/60">
               {table.headers.map((h, i) => (
                 <th
                   key={i}
                   scope="col"
-                  className="px-2.5 py-1.5 text-[10px] font-semibold tracking-wide whitespace-nowrap text-stone-500 uppercase dark:text-gray-400"
+                  className="px-2.5 py-1.5 text-[10px] font-bold tracking-wide whitespace-nowrap text-stone-500 uppercase dark:text-zinc-400"
                 >
                   {h}
                 </th>
@@ -447,15 +460,15 @@ function RuleTable({ table }: { table: NonNullable<GrammarTopic["table"]> }) {
             {table.rows.map((row, r) => (
               <tr
                 key={r}
-                className="border-t border-stone-200 dark:border-gray-800"
+                className="border-t border-stone-200 dark:border-zinc-700"
               >
                 {row.map((cell, c) => (
                   <td
                     key={c}
                     className={`px-2.5 py-1.5 align-top ${
                       c === 0
-                        ? "font-medium whitespace-nowrap text-stone-500 dark:text-gray-400"
-                        : "text-stone-700 dark:text-gray-200"
+                        ? "font-semibold whitespace-nowrap text-stone-500 dark:text-zinc-400"
+                        : "text-stone-700 dark:text-zinc-200"
                     }`}
                   >
                     {cell}

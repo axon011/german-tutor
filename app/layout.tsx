@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,15 @@ export const metadata: Metadata = {
   title: "Deutsch-Tutor",
   description:
     "AI German tutor that remembers your mistakes — B1 to B2 conversation practice",
+};
+
+// Paints the browser/OS chrome to match the app surface — groundwork for
+// installing this as a PWA.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafaf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#18181b" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

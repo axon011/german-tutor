@@ -93,9 +93,11 @@ export function PracticeTab({ active }: { active: boolean }) {
   if (queue.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
-        <LogoMark className="h-12 w-12 text-base" />
-        <h2 className="text-base font-semibold">Nothing to practice yet</h2>
-        <p className="max-w-sm text-sm text-stone-500 dark:text-gray-400">
+        <LogoMark className="h-14 w-14 text-lg" />
+        <h2 className="text-lg font-bold tracking-tight">
+          Nothing to practice yet
+        </h2>
+        <p className="max-w-sm text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
           Have a conversation first — your mistakes will show up here to
           practice.
         </p>
@@ -122,20 +124,20 @@ export function PracticeTab({ active }: { active: boolean }) {
         {/* The header and meter live OUTSIDE the keyed wrapper: they have to
             persist across exercises for the bar to animate rather than mount
             already-filled. */}
-        <p className="text-xs text-stone-500 dark:text-gray-400">
+        <p className="text-xs font-semibold text-stone-500 dark:text-zinc-400">
           Exercise {index + 1} of {queue.length} · {score} correct
         </p>
-        <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-gray-800">
+        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800">
           <div
-            className="grow-bar-fast h-full rounded-full bg-amber-400 dark:bg-amber-500"
+            className="grow-bar-fast h-full rounded-full bg-emerald-500"
             style={{ width: `${(index / queue.length) * 100}%` }}
           />
         </div>
 
         <div key={`${round}-${index}`} className="animate-slide-in">
-          <div className="mt-5 rounded-2xl border border-stone-200 px-4 py-4 dark:border-gray-800">
+          <div className="mt-5 rounded-2xl border-2 border-stone-200 bg-white px-4 py-4 dark:border-zinc-700 dark:bg-zinc-800/60">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-stone-500 dark:text-gray-400">
+              <span className="text-xs font-semibold text-stone-500 dark:text-zinc-400">
                 Your sentence
               </span>
               <TypeChip type={drill.type} />
@@ -151,7 +153,7 @@ export function PracticeTab({ active }: { active: boolean }) {
 
           <label
             htmlFor="drill-input"
-            className="mt-5 block text-sm font-medium"
+            className="mt-5 block text-sm font-bold"
           >
             Rewrite the sentence correctly:
           </label>
@@ -171,17 +173,17 @@ export function PracticeTab({ active }: { active: boolean }) {
               onChange={(e) => setAnswer(e.target.value)}
               disabled={status === "correct"}
               maxLength={4000}
-              className={`flex-1 rounded-full border bg-white/70 px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/50 disabled:opacity-60 dark:bg-gray-900/60 dark:placeholder:text-gray-500 dark:focus:border-amber-500 dark:focus:ring-amber-500/30 ${
+              className={`field flex-1 px-4 py-3 text-[15px] ${
                 shakeAt
-                  ? "border-red-400 ring-2 ring-red-300/60 dark:border-red-500 dark:ring-red-500/40"
-                  : "border-stone-300 dark:border-gray-700"
+                  ? "border-red-400! ring-2 ring-red-300/60 dark:border-red-500! dark:ring-red-500/40"
+                  : ""
               }`}
               placeholder="The corrected sentence…"
             />
             <button
               type="submit"
               disabled={status !== "revealed" && !answer.trim()}
-              className="pressable focus-ring shrink-0 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-4 py-2.5 text-sm font-medium text-amber-950 hover:opacity-90 disabled:opacity-40"
+              className="btn-3d btn-3d-primary focus-ring shrink-0 px-5 py-3 text-sm"
             >
               {status === "revealed" ? "Next" : "Check"}
             </button>
@@ -189,26 +191,26 @@ export function PracticeTab({ active }: { active: boolean }) {
 
           <div aria-live="polite" className="mt-4">
             {status === "correct" && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-green-300 bg-green-50 px-3 py-2.5 text-sm dark:border-green-500/40 dark:bg-green-500/10">
+              <div className="flex items-start gap-2.5 rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm dark:border-emerald-500/40 dark:bg-emerald-500/10">
                 <CheckMark className="mt-0.5 h-5 w-5" />
                 <div>
-                  <p className="font-medium text-green-800 dark:text-green-200">
+                  <p className="font-bold text-emerald-800 dark:text-emerald-200">
                     Correct!
                   </p>
-                  <p className="mt-1 text-green-900 dark:text-green-100">
+                  <p className="mt-1 text-emerald-900 dark:text-emerald-100">
                     {drill.expected}
                   </p>
                 </div>
               </div>
             )}
             {status === "wrong" && (
-              <p className="rounded-xl border border-red-300 bg-red-50 px-3 py-2.5 text-sm text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
+              <p className="rounded-2xl border-2 border-red-300 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
                 Not quite — look at the highlighted error.
               </p>
             )}
             {status === "revealed" && (
-              <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900">
-                <p className="text-xs font-medium text-stone-500 dark:text-gray-400">
+              <div className="rounded-2xl border-2 border-stone-200 bg-stone-50 px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <p className="text-xs font-bold uppercase tracking-wide text-stone-500 dark:text-zinc-400">
                   Solution
                 </p>
                 <p className="mt-1 leading-relaxed">{drill.expected}</p>
@@ -218,15 +220,15 @@ export function PracticeTab({ active }: { active: boolean }) {
                   </span>
                   <span
                     aria-hidden="true"
-                    className="text-stone-400 dark:text-gray-500"
+                    className="text-stone-400 dark:text-zinc-500"
                   >
                     →
                   </span>
-                  <span className="font-medium text-green-700 dark:text-green-300">
+                  <span className="font-semibold text-green-700 dark:text-green-300">
                     {drill.correction}
                   </span>
                 </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-stone-600 dark:text-gray-400">
+                <p className="mt-1.5 text-xs leading-relaxed text-stone-600 dark:text-zinc-400">
                   {drill.explanation || TYPE_LABELS[drill.type].tip}
                 </p>
               </div>
@@ -260,12 +262,12 @@ function Summary({
       className="animate-slide-in flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center"
     >
       {good ? (
-        <CheckMark className="h-14 w-14" />
+        <CheckMark className="h-16 w-16" tone="gold" />
       ) : (
-        <LogoMark className="h-12 w-12 text-base" />
+        <LogoMark className="h-14 w-14 text-lg" />
       )}
-      <h2 className="text-base font-semibold">Session complete</h2>
-      <p className="text-sm text-stone-600 dark:text-gray-300">
+      <h2 className="text-lg font-bold tracking-tight">Session complete</h2>
+      <p className="text-sm leading-relaxed text-stone-600 dark:text-zinc-300">
         <span className="tabular-nums">{shown}</span> of {total} correct.{" "}
         {score === total
           ? "Perfect — all of it stuck!"
@@ -274,7 +276,7 @@ function Summary({
       <button
         type="button"
         onClick={onRestart}
-        className="pressable focus-ring rounded-full bg-gradient-to-br from-amber-300 to-amber-500 px-4 py-2 text-sm font-medium text-amber-950 hover:opacity-90"
+        className="btn-3d btn-3d-primary focus-ring px-5 py-2.5 text-sm"
       >
         Practice again
       </button>
