@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
+import { appendErrorLog } from "@/lib/error-log";
 import { LogoMark } from "./LogoMark";
 import { MessageBubble, TypeChip } from "./MessageBubble";
 
@@ -105,10 +106,10 @@ export function Chat() {
           setMessages([...history, { role: "assistant", content: reply }]);
         }
       }
-      if (!reply) throw new Error("Leere Antwort vom Tutor.");
+      if (!reply) throw new Error("Empty response from the tutor.");
     } catch (err) {
       setMessages(history); // drop the empty/partial assistant bubble
-      setError(err instanceof Error ? err.message : "Unbekannter Fehler.");
+      setError(err instanceof Error ? err.message : "Unknown error.");
     } finally {
       setBusy(false);
     }
@@ -121,32 +122,10 @@ export function Chat() {
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 dark:border-gray-800">
-        <div className="flex items-center gap-2.5">
-          <LogoMark className="h-8 w-8 text-xs" />
-          <div>
-            <h1 className="text-sm font-semibold leading-tight">Deutsch-Tutor</h1>
-            <p className="text-xs leading-tight text-stone-500 dark:text-gray-400">
-              A1 → B2, ein Gespräch nach dem anderen
-            </p>
-          </div>
-        </div>
-        {allErrors.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setPanelOpen((o) => !o)}
-            aria-expanded={panelOpen}
-            className="order-last flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1 text-xs font-medium text-stone-600 transition-colors hover:border-amber-400 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 sm:order-none dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
-          >
-            Fehler
-            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300">
-              {allErrors.length}
-            </span>
-          </button>
-        )}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-200 px-3 py-2 sm:px-4 dark:border-gray-800">
         <div
           role="group"
-          aria-label="Mein Niveau"
+          aria-label="My level"
           className="flex items-center gap-0.5 rounded-full bg-stone-100 p-0.5 dark:bg-gray-800"
         >
           {CEFR_LEVELS.map((l) => {
@@ -168,19 +147,32 @@ export function Chat() {
             );
           })}
         </div>
-      </header>
+        {allErrors.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setPanelOpen((o) => !o)}
+            aria-expanded={panelOpen}
+            className="flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1 text-xs font-medium text-stone-600 transition-colors hover:border-amber-400 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+          >
+            Mistakes
+            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300">
+              {allErrors.length}
+            </span>
+          </button>
+        )}
+      </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
           <div className="flex flex-col items-center gap-4 pt-10 text-center">
             <LogoMark className="h-12 w-12 text-base" />
             <h2 className="text-base font-semibold">
-              Hallo! Lass uns Deutsch sprechen.
+              Hello! Let&apos;s speak German.
             </h2>
             <p className="max-w-md text-sm text-stone-500 dark:text-gray-400">
               {level === "A1"
                 ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
-                : `Schreib etwas auf Deutsch — der Tutor passt sich deinem Niveau (${level}) an und hilft dir, das nächste zu erreichen.`}
+                : `Write something in German — the tutor adapts to your level (${level}) and helps you reach the next one.`}
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((s) => (
@@ -219,14 +211,14 @@ export function Chat() {
           className="flex-1 rounded-full border border-stone-300 bg-white/70 px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/50 dark:border-gray-700 dark:bg-gray-900/60 dark:placeholder:text-gray-500 dark:focus:border-amber-500 dark:focus:ring-amber-500/30"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Schreib auf Deutsch…"
+          placeholder="Write in German…"
           maxLength={4000}
           autoFocus
         />
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          aria-label="Senden"
+          aria-label="Send"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 transition-opacity hover:opacity-90 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
           {busy ? (
@@ -262,20 +254,20 @@ function ErrorPanel({
     <>
       <button
         type="button"
-        aria-label="Fehlerliste schließen"
+        aria-label="Close the mistake list"
         onClick={onClose}
         className="absolute inset-0 z-20 cursor-default bg-stone-900/20 dark:bg-black/40"
       />
       <aside
-        aria-label="Deine Fehler"
+        aria-label="Your mistakes"
         className="animate-message-in absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-stone-200 bg-white shadow-xl sm:w-80 dark:border-gray-800 dark:bg-gray-950"
       >
         <div className="flex items-center justify-between border-b border-stone-200 px-4 py-3 dark:border-gray-800">
-          <h2 className="text-sm font-semibold">Deine Fehler</h2>
+          <h2 className="text-sm font-semibold">Your mistakes</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Schließen"
+            aria-label="Close"
             className="flex h-7 w-7 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
           >
             ×
@@ -284,7 +276,7 @@ function ErrorPanel({
         <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
           {errors.length === 0 ? (
             <p className="text-sm text-stone-500 dark:text-gray-400">
-              Noch keine Fehler — weiter so!
+              No mistakes yet — keep it up!
             </p>
           ) : (
             errors.map((e, i) => (
@@ -319,37 +311,6 @@ function ErrorPanel({
   );
 }
 
-/**
- * Append this turn's corrections to the local error log. This is the data feed
- * a future recommender / SRS deck reads, so the shape stays flat and boring:
- * one row per error, newest last, capped so localStorage can't grow unbounded.
- */
-function appendErrorLog(
-  errors: CorrectionError[],
-  message: string,
-  level: CefrLevel,
-) {
-  try {
-    const ts = Date.now();
-    const existing = JSON.parse(localStorage.getItem("error-log") ?? "[]");
-    const log = Array.isArray(existing) ? existing : [];
-    for (const e of errors) {
-      log.push({
-        ts,
-        level,
-        message,
-        span: e.span,
-        type: e.type,
-        correction: e.correction,
-        explanation: e.explanation,
-      });
-    }
-    localStorage.setItem("error-log", JSON.stringify(log.slice(-500)));
-  } catch {
-    // Private mode / quota exceeded — the log is a nice-to-have.
-  }
-}
-
 function TypingIndicator() {
   return (
     <div className="animate-message-in flex items-end gap-2">
@@ -357,7 +318,7 @@ function TypingIndicator() {
       <div
         className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-3 dark:bg-gray-800"
         role="status"
-        aria-label="Der Tutor schreibt…"
+        aria-label="The tutor is typing…"
       >
         {[0, 1, 2].map((i) => (
           <span
