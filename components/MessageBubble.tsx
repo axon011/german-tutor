@@ -54,7 +54,10 @@ export function MessageBubble({
                         prev === seg.errorIndex ? null : seg.errorIndex!,
                       )
                     }
-                    className={`cursor-pointer underline decoration-red-300 decoration-wavy decoration-2 underline-offset-4 transition-colors hover:decoration-red-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400 ${
+                    // The spans mount when the corrector's answer lands, a
+                    // second or two after the message — the pulse is what
+                    // tells the learner something just changed.
+                    className={`correction-pulse focus-ring cursor-pointer rounded-sm underline decoration-red-300 decoration-wavy decoration-2 underline-offset-4 transition-colors hover:decoration-red-200 ${
                       openIndex === seg.errorIndex
                         ? "bg-red-300/25 decoration-red-200"
                         : ""
@@ -74,7 +77,10 @@ export function MessageBubble({
             <span className="text-red-700 line-through dark:text-red-300">
               {open.span}
             </span>
-            <span aria-hidden="true" className="text-stone-400 dark:text-gray-500">
+            <span
+              aria-hidden="true"
+              className="text-stone-400 dark:text-gray-500"
+            >
               →
             </span>
             <span className="font-medium text-green-700 dark:text-green-300">

@@ -6,6 +6,10 @@
   /* Warm radial tint behind the chat card. */
   --page-tint-a: rgba(251, 191, 36, 0.14);
   --page-tint-b: rgba(120, 113, 108, 0.08);
+  /* German flag, adjusted per theme so the black band stays visible. */
+  --flag-black: #000000;
+  --flag-red: #dd0000;
+  --flag-gold: #ffcc00;
 }
 
 @theme inline {
@@ -21,6 +25,8 @@
     --foreground: #ededed;
     --page-tint-a: rgba(180, 120, 20, 0.16);
     --page-tint-b: rgba(30, 41, 59, 0.55);
+    /* Pure black would vanish against the dark card. */
+    --flag-black: #57534e;
   }
 }
 
@@ -33,9 +39,106 @@ body {
 /* Page backdrop: subtle warm radial wash over the flat background. */
 .app-backdrop {
   background-image:
-    radial-gradient(60rem 32rem at 50% -8rem, var(--page-tint-a), transparent 70%),
-    radial-gradient(48rem 40rem at 100% 100%, var(--page-tint-b), transparent 70%);
+    radial-gradient(
+      60rem 32rem at 50% -8rem,
+      var(--page-tint-a),
+      transparent 70%
+    ),
+    radial-gradient(
+      48rem 40rem at 100% 100%,
+      var(--page-tint-b),
+      transparent 70%
+    );
 }
+
+/* ---------------------------------------------------------------------------
+ * Brand
+ * ------------------------------------------------------------------------- */
+
+/* Tricolor rule across the top of the card: three hard-edged equal thirds. */
+.brand-stripe {
+  background-image: linear-gradient(
+    to right,
+    var(--flag-black) 0 33.3333%,
+    var(--flag-red) 33.3333% 66.6666%,
+    var(--flag-gold) 66.6666% 100%
+  );
+}
+
+/* Slow shimmer across the logo mark. Cosmetic — dies under reduced motion. */
+@keyframes logo-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: -200% 50%;
+  }
+}
+
+.logo-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    #fcd34d 0%,
+    #fde68a 25%,
+    #f59e0b 50%,
+    #fde68a 75%,
+    #fcd34d 100%
+  );
+  background-size: 200% 100%;
+  animation: logo-shimmer 6s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Shared interaction primitives
+ * ------------------------------------------------------------------------- */
+
+/* One press affordance for every button-ish control. The property list also
+ * covers what `transition-colors`/`transition-opacity` used to do, since this
+ * rule wins over them. */
+.pressable {
+  transition:
+    transform 120ms ease-out,
+    color 120ms ease-out,
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out,
+    opacity 120ms ease-out;
+}
+
+.pressable:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.pressable:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+/* The single focus treatment used everywhere. */
+.focus-ring:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+/* Meter fills that animate from 0 on activation. */
+.grow-bar {
+  transition: width 600ms ease-out;
+}
+
+.grow-bar-fast {
+  transition: width 300ms ease-out;
+}
+
+/* The sliding active-tab pill. */
+.tab-pill {
+  transition:
+    transform 200ms ease-out,
+    width 200ms ease-out,
+    opacity 200ms ease-out;
+}
+
+/* ---------------------------------------------------------------------------
+ * State-communicating animations
+ * ------------------------------------------------------------------------- */
 
 @keyframes message-in {
   from {
@@ -79,10 +182,171 @@ body {
   animation: button-spin 0.7s linear infinite;
 }
 
+/* A new exercise arrives from the right as the previous one is replaced. */
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 200ms ease-out both;
+}
+
+/* Corrections just landed on a message — flag them once, then get out of the
+ * way. Two short flashes, not a loop. */
+@keyframes correction-pulse {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(252, 165, 165, 0.4);
+  }
+}
+
+.correction-pulse {
+  animation: correction-pulse 700ms ease-in-out 2;
+}
+
+/* The mistake count went up. */
+@keyframes badge-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.35);
+  }
+}
+
+.animate-badge-bounce {
+  animation: badge-bounce 320ms ease-out;
+}
+
+/* Wrong answer. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.animate-shake {
+  animation: shake 300ms ease-in-out;
+}
+
+/* Checkmark stroke draws itself. The paths set pathLength="1", so the dash
+ * maths is resolution-independent. */
+@keyframes check-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.check-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: check-draw 400ms ease-out 80ms forwards;
+}
+
+/* Activity-strip cells, staggered by inline animation-delay. */
+@keyframes cell-in {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-cell-in {
+  animation: cell-in 220ms ease-out both;
+}
+
+/* ---------------------------------------------------------------------------
+ * Cosmetic: the focus card's slowly travelling gradient border.
+ * ------------------------------------------------------------------------- */
+
+@keyframes shimmer-pan {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: -300% 50%;
+  }
+}
+
+.shimmer-border {
+  background-image: linear-gradient(
+    110deg,
+    rgba(245, 158, 11, 0.55) 0%,
+    rgba(245, 158, 11, 0.18) 25%,
+    rgba(251, 191, 36, 0.9) 50%,
+    rgba(245, 158, 11, 0.18) 75%,
+    rgba(245, 158, 11, 0.55) 100%
+  );
+  background-size: 300% 100%;
+  animation: shimmer-pan 8s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Reduced motion. Purely cosmetic movement is removed outright; the animations
+ * that communicate state (arrival, success, failure, change) collapse to the
+ * finished frame so nothing is lost, only the travel.
+ * ------------------------------------------------------------------------- */
+
 @media (prefers-reduced-motion: reduce) {
+  .logo-shimmer,
+  .shimmer-border {
+    animation: none;
+    background-position: 0% 50%;
+  }
+
   .animate-message-in,
   .animate-typing-dot,
-  .animate-button-spin {
+  .animate-button-spin,
+  .animate-slide-in,
+  .animate-cell-in,
+  .animate-badge-bounce,
+  .animate-shake,
+  .correction-pulse {
     animation: none;
+  }
+
+  .check-draw {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .pressable,
+  .tab-pill,
+  .grow-bar,
+  .grow-bar-fast {
+    transition: none;
+  }
+
+  .pressable:hover:not(:disabled),
+  .pressable:active:not(:disabled) {
+    transform: none;
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Chat } from "./Chat";
 import { LogoMark } from "./LogoMark";
 import { PracticeTab } from "./PracticeTab";
@@ -24,7 +24,34 @@ const TABS: { id: Tab; label: string }[] = [
  */
 export function AppShell() {
   const [tab, setTab] = useState<Tab>("chat");
-  const [visited, setVisited] = useState<Set<Tab>>(() => new Set<Tab>(["chat"]));
+  const [visited, setVisited] = useState<Set<Tab>>(
+    () => new Set<Tab>(["chat"]),
+  );
+
+  const tablistRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef(new Map<Tab, HTMLButtonElement>());
+  /** Geometry of the amber pill, measured from the active tab button. */
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(
+    null,
+  );
+
+  // The pill is one absolutely-positioned element that slides between buttons,
+  // so its geometry has to be read from the DOM. useLayoutEffect (not useEffect)
+  // keeps the very first paint from showing it in the wrong place.
+  useLayoutEffect(() => {
+    const list = tablistRef.current;
+    const measure = () => {
+      const button = tabRefs.current.get(tab);
+      if (!button) return;
+      setPill({ left: button.offsetLeft, width: button.offsetWidth });
+    };
+    measure();
+    if (!list) return;
+    // Label widths shift with the sm: breakpoint and with font loading.
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [tab]);
 
   function select(next: Tab) {
     setTab(next);
@@ -37,31 +64,47 @@ export function AppShell() {
         <div className="flex items-center gap-2.5">
           <LogoMark className="h-8 w-8 text-xs" />
           <div>
-            <h1 className="text-sm font-semibold leading-tight">Deutsch-Tutor</h1>
+            <h1 className="text-sm font-semibold leading-tight">
+              Deutsch-Tutor
+            </h1>
             <p className="hidden text-xs leading-tight text-stone-500 sm:block dark:text-gray-400">
               A1 → B2, ein Gespräch nach dem anderen
             </p>
           </div>
         </div>
         <div
+          ref={tablistRef}
           role="tablist"
           aria-label="Sections"
-          className="flex items-center gap-0.5 rounded-full bg-stone-100 p-0.5 dark:bg-gray-800"
+          className="relative flex items-center gap-0.5 rounded-full bg-stone-100 p-0.5 dark:bg-gray-800"
         >
+          <span
+            aria-hidden="true"
+            className="tab-pill absolute left-0 top-0.5 bottom-0.5 rounded-full bg-amber-400 shadow-sm"
+            style={{
+              width: pill?.width ?? 0,
+              transform: `translateX(${pill?.left ?? 0}px)`,
+              opacity: pill ? 1 : 0,
+            }}
+          />
           {TABS.map(({ id, label }) => {
             const active = id === tab;
             return (
               <button
                 key={id}
+                ref={(node) => {
+                  if (node) tabRefs.current.set(id, node);
+                  else tabRefs.current.delete(id);
+                }}
                 type="button"
                 role="tab"
                 id={`tab-${id}`}
                 aria-selected={active}
                 aria-controls={`panel-${id}`}
                 onClick={() => select(id)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 sm:px-3 sm:text-xs ${
+                className={`pressable focus-ring relative z-10 rounded-full px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs ${
                   active
-                    ? "bg-amber-400 text-amber-950 shadow-sm"
+                    ? "text-amber-950"
                     : "text-stone-600 hover:text-stone-900 dark:text-gray-400 dark:hover:text-gray-100"
                 }`}
               >

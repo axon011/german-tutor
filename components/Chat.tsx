@@ -136,7 +136,7 @@ export function Chat() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => changeLevel(l)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+                className={`pressable focus-ring rounded-full px-2.5 py-1 text-xs font-medium ${
                   active
                     ? "bg-amber-400 text-amber-950 shadow-sm"
                     : "text-stone-600 hover:text-stone-900 dark:text-gray-400 dark:hover:text-gray-100"
@@ -152,10 +152,15 @@ export function Chat() {
             type="button"
             onClick={() => setPanelOpen((o) => !o)}
             aria-expanded={panelOpen}
-            className="flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1 text-xs font-medium text-stone-600 transition-colors hover:border-amber-400 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+            className="pressable focus-ring flex items-center gap-1.5 rounded-full border border-stone-300 px-3 py-1 text-xs font-medium text-stone-600 hover:border-amber-400 hover:text-stone-900 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
           >
             Mistakes
-            <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300">
+            {/* Keying on the count remounts the span, which is what restarts
+                the bounce every time a new mistake is logged. */}
+            <span
+              key={allErrors.length}
+              className="animate-badge-bounce inline-block rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300"
+            >
               {allErrors.length}
             </span>
           </button>
@@ -180,7 +185,7 @@ export function Chat() {
                   key={s}
                   type="button"
                   onClick={() => applySuggestion(s)}
-                  className="rounded-full border border-stone-300 px-3 py-1.5 text-xs text-stone-600 transition-colors hover:border-amber-400 hover:text-stone-900 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+                  className="pressable focus-ring rounded-full border border-stone-300 px-3 py-1.5 text-xs text-stone-600 hover:border-amber-400 hover:text-stone-900 hover:shadow-sm dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
                 >
                   {s}
                 </button>
@@ -219,7 +224,7 @@ export function Chat() {
           type="submit"
           disabled={busy || !input.trim()}
           aria-label="Send"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 transition-opacity hover:opacity-90 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+          className="pressable focus-ring flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 hover:opacity-90 disabled:opacity-40"
         >
           {busy ? (
             <span className="animate-button-spin h-4 w-4 rounded-full border-2 border-amber-950/30 border-t-amber-950" />
@@ -268,7 +273,7 @@ function ErrorPanel({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="pressable focus-ring flex h-7 w-7 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
           >
             ×
           </button>
