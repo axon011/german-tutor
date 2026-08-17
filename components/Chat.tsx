@@ -3,7 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
+import { LogoMark } from "./LogoMark";
 import { MessageBubble } from "./MessageBubble";
+
+const SUGGESTIONS = [
+  "Ich möchte über mein Wochenende sprechen",
+  "Stell mir Fragen über Hobbys",
+  "Lass uns über Essen reden",
+];
 
 export function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -12,6 +19,7 @@ export function Chat() {
   const [error, setError] = useState<string | null>(null);
   const [level, setLevel] = useState<CefrLevel>("B1");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("cefr-level");
@@ -24,6 +32,11 @@ export function Chat() {
   function changeLevel(next: CefrLevel) {
     setLevel(next);
     localStorage.setItem("cefr-level", next);
+  }
+
+  function applySuggestion(text: string) {
+    setInput(text);
+    inputRef.current?.focus();
   }
 
   useEffect(() => {
@@ -79,49 +92,90 @@ export function Chat() {
   }
 
   return (
-    <div className="flex h-full w-full max-w-2xl flex-col">
-      <div className="flex items-center justify-end gap-2 px-4 pt-2">
-        <label htmlFor="level" className="text-xs text-gray-500">
-          Mein Niveau
-        </label>
-        <select
-          id="level"
-          value={level}
-          onChange={(e) => changeLevel(e.target.value as CefrLevel)}
-          className="rounded-md border border-gray-300 bg-transparent px-2 py-1 text-xs dark:border-gray-700"
+    <div className="flex h-full w-full flex-col">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 dark:border-gray-800">
+        <div className="flex items-center gap-2.5">
+          <LogoMark className="h-8 w-8 text-xs" />
+          <div>
+            <h1 className="text-sm font-semibold leading-tight">Deutsch-Tutor</h1>
+            <p className="text-xs leading-tight text-stone-500 dark:text-gray-400">
+              A1 → B2, ein Gespräch nach dem anderen
+            </p>
+          </div>
+        </div>
+        <div
+          role="group"
+          aria-label="Mein Niveau"
+          className="flex items-center gap-0.5 rounded-full bg-stone-100 p-0.5 dark:bg-gray-800"
         >
-          {CEFR_LEVELS.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </div>
+          {CEFR_LEVELS.map((l) => {
+            const active = l === level;
+            return (
+              <button
+                key={l}
+                type="button"
+                aria-pressed={active}
+                onClick={() => changeLevel(l)}
+                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 ${
+                  active
+                    ? "bg-amber-400 text-amber-950 shadow-sm"
+                    : "text-stone-600 hover:text-stone-900 dark:text-gray-400 dark:hover:text-gray-100"
+                }`}
+              >
+                {l}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
-          <p className="pt-16 text-center text-sm text-gray-400">
-            {level === "A1"
-              ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
-              : `Schreib etwas auf Deutsch — der Tutor passt sich deinem Niveau (${level}) an und hilft dir, das nächste zu erreichen.`}
-          </p>
+          <div className="flex flex-col items-center gap-4 pt-10 text-center">
+            <LogoMark className="h-12 w-12 text-base" />
+            <h2 className="text-base font-semibold">
+              Hallo! Lass uns Deutsch sprechen.
+            </h2>
+            <p className="max-w-md text-sm text-stone-500 dark:text-gray-400">
+              {level === "A1"
+                ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
+                : `Schreib etwas auf Deutsch — der Tutor passt sich deinem Niveau (${level}) an und hilft dir, das nächste zu erreichen.`}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => applySuggestion(s)}
+                  className="rounded-full border border-stone-300 px-3 py-1.5 text-xs text-stone-600 transition-colors hover:border-amber-400 hover:text-stone-900 dark:border-gray-700 dark:text-gray-300 dark:hover:border-amber-500 dark:hover:text-gray-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
-        {messages.map((m, i) => (
-          <MessageBubble key={i} message={m} />
-        ))}
-        {error && (
-          <p className="text-center text-sm text-red-500">{error}</p>
+        {messages.map((m, i) =>
+          m.role === "assistant" && m.content === "" ? (
+            <TypingIndicator key={i} />
+          ) : (
+            <MessageBubble key={i} message={m} />
+          ),
         )}
+        {error && <p className="text-center text-sm text-red-500">{error}</p>}
         <div ref={bottomRef} />
       </div>
+
       <form
-        className="flex gap-2 border-t border-gray-200 p-4 dark:border-gray-800"
+        className="flex items-center gap-2 border-t border-stone-200 px-4 py-3 dark:border-gray-800"
         onSubmit={(e) => {
           e.preventDefault();
           send();
         }}
       >
         <input
-          className="flex-1 rounded-full border border-gray-300 bg-transparent px-4 py-2 text-sm outline-none focus:border-blue-500 dark:border-gray-700"
+          ref={inputRef}
+          className="flex-1 rounded-full border border-stone-300 bg-white/70 px-4 py-2.5 text-sm outline-none transition-colors placeholder:text-stone-400 focus:border-amber-400 focus:ring-2 focus:ring-amber-300/50 dark:border-gray-700 dark:bg-gray-900/60 dark:placeholder:text-gray-500 dark:focus:border-amber-500 dark:focus:ring-amber-500/30"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Schreib auf Deutsch…"
@@ -131,11 +185,44 @@ export function Chat() {
         <button
           type="submit"
           disabled={busy || !input.trim()}
-          className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white disabled:opacity-40"
+          aria-label="Senden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 transition-opacity hover:opacity-90 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
         >
-          {busy ? "…" : "Senden"}
+          {busy ? (
+            <span className="animate-button-spin h-4 w-4 rounded-full border-2 border-amber-950/30 border-t-amber-950" />
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M3.4 20.4 21 12 3.4 3.6 3.4 10.1 15.6 12 3.4 13.9z" />
+            </svg>
+          )}
         </button>
       </form>
+    </div>
+  );
+}
+
+function TypingIndicator() {
+  return (
+    <div className="animate-message-in flex items-end gap-2">
+      <LogoMark className="h-7 w-7 text-[10px]" />
+      <div
+        className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-stone-100 px-4 py-3 dark:bg-gray-800"
+        role="status"
+        aria-label="Der Tutor schreibt…"
+      >
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="animate-typing-dot h-1.5 w-1.5 rounded-full bg-stone-400 dark:bg-gray-500"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

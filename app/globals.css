@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fdfcfa;
+  --foreground: #1c1917;
+  /* Warm radial tint behind the chat card. */
+  --page-tint-a: rgba(251, 191, 36, 0.14);
+  --page-tint-b: rgba(120, 113, 108, 0.08);
 }
 
 @theme inline {
@@ -14,13 +17,72 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0b0b0d;
     --foreground: #ededed;
+    --page-tint-a: rgba(180, 120, 20, 0.16);
+    --page-tint-b: rgba(30, 41, 59, 0.55);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Page backdrop: subtle warm radial wash over the flat background. */
+.app-backdrop {
+  background-image:
+    radial-gradient(60rem 32rem at 50% -8rem, var(--page-tint-a), transparent 70%),
+    radial-gradient(48rem 40rem at 100% 100%, var(--page-tint-b), transparent 70%);
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-message-in {
+  animation: message-in 150ms ease-out both;
+}
+
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.animate-typing-dot {
+  animation: typing-dot 1.1s ease-in-out infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-button-spin {
+  animation: button-spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-message-in,
+  .animate-typing-dot,
+  .animate-button-spin {
+    animation: none;
+  }
 }
