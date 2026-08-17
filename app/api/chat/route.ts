@@ -1,4 +1,4 @@
-import { getLesson, type Lesson } from "@/lib/curriculum";
+import { getFocusEntry, type FocusEntry } from "@/lib/focus";
 import { getProvider } from "@/lib/llm";
 import type { ChatMessage } from "@/lib/llm/provider";
 import { isCefrLevel, tutorSystemPrompt, type CefrLevel } from "@/lib/tutor-prompt";
@@ -16,14 +16,16 @@ const HISTORY_WINDOW = 10;
  * → SSE stream. Events: `data: {"text": "..."}` per chunk, `data: [DONE]` at
  * the end, `data: {"error": "..."}` if the provider fails mid-stream.
  *
- * The client sends only a lesson *id*; the German instruction that steers the
- * tutor lives in lib/curriculum.ts and is appended to the system prompt here,
- * so no prompt text ever crosses the wire from the browser.
+ * The client sends only an *id* — a curriculum lesson, or a grammar-rulebook
+ * topic when it starts with "gr-". Either way the German instruction that
+ * steers the tutor lives server-side (lib/curriculum.ts, lib/grammar.ts) and is
+ * resolved through lib/focus.ts, so no prompt text ever crosses the wire from
+ * the browser. The field is still called `lessonId` for the client's sake.
  */
 export async function POST(req: Request) {
   let messages: ChatMessage[];
   let level: CefrLevel = "B1";
-  let lesson: Lesson | undefined;
+  let focusEntry: FocusEntry | undefined;
   try {
     const body = await req.json();
     messages = body.messages;
@@ -33,8 +35,9 @@ export async function POST(req: Request) {
     }
     if (body.lessonId !== undefined && body.lessonId !== null) {
       if (typeof body.lessonId !== "string") throw new Error("invalid lessonId");
-      lesson = getLesson(body.lessonId);
-      if (!lesson) throw new Error("unknown lessonId");
+      focusEntry = getFocusEntry(body.lessonId);
+      // A grammar topic without a focus instruction cannot steer anything.
+      if (!focusEntry?.focus) throw new Error("unknown lessonId");
     }
     if (
       !Array.isArray(messages) ||
@@ -56,10 +59,10 @@ export async function POST(req: Request) {
   const provider = getProvider("conversation");
   const windowed = messages.slice(-HISTORY_WINDOW);
   const encoder = new TextEncoder();
-  // Lesson focus goes after the level block so the cacheable static half of
-  // the prompt stays at the front.
-  const systemPrompt = lesson
-    ? `${tutorSystemPrompt(level)}\n\n${lesson.focus}`
+  // The focus instruction goes after the level block so the cacheable static
+  // half of the prompt stays at the front.
+  const systemPrompt = focusEntry?.focus
+    ? `${tutorSystemPrompt(level)}\n\n${focusEntry.focus}`
     : tutorSystemPrompt(level);
 
   const stream = new ReadableStream<Uint8Array>({

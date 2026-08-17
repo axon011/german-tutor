@@ -5,7 +5,8 @@ import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { appendErrorLog } from "@/lib/error-log";
-import { getLesson, lessonsForLevel, type Lesson } from "@/lib/curriculum";
+import { lessonsForLevel, type Lesson } from "@/lib/curriculum";
+import { getFocusEntry, type FocusEntry } from "@/lib/focus";
 import {
   COMPLETE_TURNS,
   readLessonProgress,
@@ -52,7 +53,9 @@ export function Chat({
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const lesson = activeLesson ? getLesson(activeLesson) : undefined;
+  // A curriculum lesson or a grammar rule — the chip renders both, and only
+  // the label differs.
+  const focus = activeLesson ? getFocusEntry(activeLesson) : undefined;
 
   useEffect(() => {
     const saved = localStorage.getItem("cefr-level");
@@ -249,7 +252,7 @@ export function Chat({
                 ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
                 : `Write something in German — the tutor adapts to your level (${level}) and helps you reach the next one.`}
             </p>
-            {!lesson && !everCompleted && onStartLesson && (
+            {!focus && !everCompleted && onStartLesson && (
               <button
                 type="button"
                 onClick={startFirstLesson}
@@ -259,13 +262,13 @@ export function Chat({
               </button>
             )}
             <div className="flex flex-wrap justify-center gap-2">
-              {lesson?.starter && (
+              {focus?.starter && (
                 <button
                   type="button"
-                  onClick={() => applySuggestion(lesson.starter as string)}
+                  onClick={() => applySuggestion(focus.starter as string)}
                   className="pressable focus-ring rounded-full border border-amber-400 bg-amber-50 px-3 py-1.5 text-xs text-amber-900 hover:shadow-sm dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-200"
                 >
-                  {lesson.starter}
+                  {focus.starter}
                 </button>
               )}
               {SUGGESTIONS.map((s) => (
@@ -292,9 +295,9 @@ export function Chat({
         <div ref={bottomRef} />
       </div>
 
-      {lesson && (
-        <LessonChip
-          lesson={lesson}
+      {focus && (
+        <FocusChip
+          focus={focus}
           turns={lessonTurns}
           celebrating={celebrating}
           onEnd={() => onEndLesson?.()}
@@ -346,21 +349,23 @@ export function Chat({
 }
 
 /**
- * The "you are inside a lesson" bar. Completion turns it green for a few
- * seconds but never ends the lesson — the learner may well keep talking, and
- * yanking the focus prompt mid-conversation would be the wrong reward.
+ * The "you are inside a lesson or a grammar rule" bar. Completion turns it
+ * green for a few seconds but never ends the focus — the learner may well keep
+ * talking, and yanking the focus prompt mid-conversation would be the wrong
+ * reward.
  */
-function LessonChip({
-  lesson,
+function FocusChip({
+  focus,
   turns,
   celebrating,
   onEnd,
 }: {
-  lesson: Lesson;
+  focus: FocusEntry;
   turns: number;
   celebrating: boolean;
   onEnd: () => void;
 }) {
+  const grammar = focus.kind === "grammar";
   return (
     <div
       className={`animate-message-in flex items-center gap-2 border-t px-4 py-2 text-xs ${
@@ -387,7 +392,11 @@ function LessonChip({
         </svg>
       )}
       <span className="min-w-0 flex-1 truncate font-medium">
-        {celebrating ? "Lesson complete!" : `Lesson: ${lesson.title}`}
+        {celebrating
+          ? grammar
+            ? "Rule practised!"
+            : "Lesson complete!"
+          : `${grammar ? "Rule" : "Lesson"}: ${focus.title}`}
       </span>
       <span className="shrink-0 tabular-nums opacity-80">
         {Math.min(turns, COMPLETE_TURNS)}/{COMPLETE_TURNS}
@@ -395,8 +404,8 @@ function LessonChip({
       <button
         type="button"
         onClick={onEnd}
-        aria-label="End lesson"
-        title="End lesson"
+        aria-label={grammar ? "End rule practice" : "End lesson"}
+        title={grammar ? "End rule practice" : "End lesson"}
         className="pressable focus-ring flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-black/10 dark:hover:bg-white/10"
       >
         ×

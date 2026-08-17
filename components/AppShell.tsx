@@ -1,21 +1,24 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
-import type { Lesson } from "@/lib/curriculum";
 import { startLesson } from "@/lib/lesson-progress";
 import { Chat } from "./Chat";
+import { GrammarTab } from "./GrammarTab";
 import { LearnTab } from "./LearnTab";
 import { LogoMark } from "./LogoMark";
 import { PracticeTab } from "./PracticeTab";
 import { ProgressTab } from "./ProgressTab";
 
-export type Tab = "learn" | "chat" | "practice" | "progress";
+export type Tab = "learn" | "chat" | "practice" | "progress" | "grammar";
 
+// Five labels have to survive a 375px viewport without the row wrapping, which
+// is why the conversation tab is called "Chat" here.
 const TABS: { id: Tab; label: string }[] = [
   { id: "learn", label: "Learn" },
-  { id: "chat", label: "Conversation" },
+  { id: "chat", label: "Chat" },
   { id: "practice", label: "Practice" },
   { id: "progress", label: "Progress" },
+  { id: "grammar", label: "Grammar" },
 ];
 
 /**
@@ -26,8 +29,8 @@ const TABS: { id: Tab; label: string }[] = [
  * tab switch. Learn, Practice and Progress mount lazily on first visit and
  * re-read localStorage on every activation.
  *
- * The active lesson lives here rather than in Chat, because Learn starts it
- * and Chat consumes it.
+ * The active focus — a curriculum lesson or a grammar rule — lives here rather
+ * than in Chat, because Learn and Grammar start it and Chat consumes it.
  */
 export function AppShell() {
   const [tab, setTab] = useState<Tab>("chat");
@@ -66,10 +69,14 @@ export function AppShell() {
     setVisited((prev) => (prev.has(next) ? prev : new Set(prev).add(next)));
   }
 
-  /** Arm the lesson and drop the learner straight into the conversation. */
-  function beginLesson(lesson: Lesson) {
-    startLesson(lesson.id);
-    setActiveLesson(lesson.id);
+  /**
+   * Arm a lesson or a grammar rule and drop the learner straight into the
+   * conversation. Both kinds share the same id space and progress map, so the
+   * Grammar tab reuses this untouched.
+   */
+  function beginFocus(id: string) {
+    startLesson(id);
+    setActiveLesson(id);
     select("chat");
   }
 
@@ -117,7 +124,7 @@ export function AppShell() {
                 aria-selected={active}
                 aria-controls={`panel-${id}`}
                 onClick={() => select(id)}
-                className={`pressable focus-ring relative z-10 rounded-full px-2.5 py-1 text-[11px] font-medium sm:px-3 sm:text-xs ${
+                className={`pressable focus-ring relative z-10 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-medium sm:px-3 sm:text-xs ${
                   active
                     ? "text-amber-950"
                     : "text-stone-600 hover:text-stone-900 dark:text-gray-400 dark:hover:text-gray-100"
@@ -142,7 +149,7 @@ export function AppShell() {
           <LearnTab
             active={tab === "learn"}
             activeLesson={activeLesson}
-            onStart={beginLesson}
+            onStart={(lesson) => beginFocus(lesson.id)}
           />
         </div>
       )}
@@ -155,7 +162,7 @@ export function AppShell() {
       >
         <Chat
           activeLesson={activeLesson}
-          onStartLesson={beginLesson}
+          onStartLesson={(lesson) => beginFocus(lesson.id)}
           onEndLesson={() => setActiveLesson(null)}
         />
       </div>
@@ -183,6 +190,23 @@ export function AppShell() {
           }
         >
           <ProgressTab active={tab === "progress"} />
+        </div>
+      )}
+
+      {visited.has("grammar") && (
+        <div
+          role="tabpanel"
+          id="panel-grammar"
+          aria-labelledby="tab-grammar"
+          className={
+            tab === "grammar" ? "flex min-h-0 flex-1 flex-col" : "hidden"
+          }
+        >
+          <GrammarTab
+            active={tab === "grammar"}
+            activeFocus={activeLesson}
+            onPractice={beginFocus}
+          />
         </div>
       )}
     </div>
