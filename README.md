@@ -4,7 +4,7 @@ An AI German tutor that **remembers every mistake you make and builds your curri
 
 Duolingo teaches everyone the same German; ChatGPT forgets your mistakes. This app logs every error you make in real conversation, turns them into drills, and tells you what to practice next.
 
-**Live:** _deploying_ · **Stack:** Next.js (App Router) · TypeScript · Tailwind · SSE streaming · Zod
+**Status:** feature-complete, runs locally — Vercel deployment (Gemini provider) is the next step · **Stack:** Next.js (App Router) · TypeScript · Tailwind · SSE streaming · Zod
 
 ## What it does
 
