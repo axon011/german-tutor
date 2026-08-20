@@ -6,7 +6,7 @@ import type { ChatMessage, LLMProvider } from "./provider";
  */
 
 export interface GroqOptions {
-  /** Default "llama-3.3-70b-versatile" — strong German, fast, free tier. */
+  /** Default "openai/gpt-oss-120b" — strong German, fast, free tier. */
   model?: string;
   /** Defaults to process.env.GROQ_API_KEY. */
   apiKey?: string;
@@ -21,7 +21,7 @@ export class GroqProvider implements LLMProvider {
   ): AsyncIterable<string> {
     const apiKey = this.opts.apiKey ?? process.env.GROQ_API_KEY;
     if (!apiKey) throw new Error("GROQ_API_KEY is not set");
-    const model = this.opts.model ?? "llama-3.3-70b-versatile";
+    const model = this.opts.model ?? "openai/gpt-oss-120b";
 
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
