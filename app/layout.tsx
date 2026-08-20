@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,7 +16,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Deutsch-Tutor",
   description:
-    "AI German tutor that remembers your mistakes — B1 to B2 conversation practice",
+    "AI German tutor that remembers your mistakes — A1 to B2 conversation practice",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Deutsch-Tutor",
+  },
 };
 
 // Paints the browser/OS chrome to match the app surface — groundwork for
@@ -33,7 +44,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <RegisterSW />
+        {children}
+      </body>
     </html>
   );
 }
