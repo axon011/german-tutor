@@ -173,7 +173,7 @@ function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
     <div className="shimmer-border rounded-2xl p-0.5">
       {/* Opaque in both themes: a translucent fill would let the panning
         gradient wash the whole card instead of just its edge. */}
-      <section className="rounded-[14px] bg-emerald-50 px-4 py-4 dark:bg-[#10231b]">
+      <section className="rounded-[14px] bg-emerald-50 px-4 py-4 dark:bg-emerald-950">
         <div className="flex items-center gap-2.5">
           <LogoMark className="h-9 w-9 text-sm" />
           <div>

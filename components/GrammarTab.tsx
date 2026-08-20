@@ -12,6 +12,7 @@ import { isCompleted, type LessonProgress } from "@/lib/lesson-progress";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { CheckMark } from "./CheckMark";
 import { LEVEL_CHIP } from "./levelStyles";
+import { useDialog } from "./useDialog";
 import { useLessonProgress } from "./useLessonProgress";
 
 type LevelFilter = "All" | CefrLevel;
@@ -129,7 +130,7 @@ export function GrammarTab({
                 className={`pressable focus-ring flex items-center gap-1.5 rounded-full border-2 px-2.5 py-1 text-[11px] font-semibold ${
                   on
                     ? "border-emerald-400 bg-emerald-50 text-emerald-900 dark:border-emerald-500/60 dark:bg-emerald-500/10 dark:text-emerald-200"
-                    : "border-stone-200 text-stone-600 hover:border-emerald-300 hover:text-stone-900 dark:border-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-100"
+                    : "border-stone-200 text-stone-600 hover:border-emerald-300 hover:text-stone-900 dark:border-zinc-600 dark:text-zinc-300 dark:hover:border-emerald-400 dark:hover:text-zinc-100"
                 }`}
               >
                 <span
@@ -271,37 +272,23 @@ function DetailSheet({
   onPractice: (topicId: string) => void;
 }) {
   const meta = CATEGORY_META[topic.category];
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const { containerRef, closeRef } = useDialog(onClose);
   const titleId = `${topic.id}-sheet-title`;
-
-  useEffect(() => {
-    // The card that opened the sheet gets the focus back when it closes.
-    const opener = document.activeElement;
-    closeRef.current?.focus();
-    return () => {
-      if (opener instanceof HTMLElement) opener.focus();
-    };
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   return (
     <div className="absolute inset-0 z-20 flex flex-col justify-end">
+      {/* Click target only — Escape and the close button are the keyboard
+          routes out, and the trap keeps Tab inside the sheet. */}
       <button
         type="button"
+        tabIndex={-1}
+        aria-hidden="true"
         onClick={onClose}
         className="animate-message-in absolute inset-0 cursor-default bg-stone-900/30 backdrop-blur-[2px] dark:bg-black/55"
-      >
-        <span className="sr-only">Close</span>
-      </button>
+      />
 
       <div
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

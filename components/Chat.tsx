@@ -16,6 +16,7 @@ import { CheckMark } from "./CheckMark";
 import { LEVEL_CHIP } from "./levelStyles";
 import { LogoMark } from "./LogoMark";
 import { MessageBubble, TypeChip } from "./MessageBubble";
+import { useDialog } from "./useDialog";
 
 const SUGGESTIONS = [
   "Ich möchte über mein Wochenende sprechen",
@@ -195,7 +196,10 @@ export function Chat({
     .flatMap((i) => corrections[i]);
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden">
+    // `min-h-0 flex-1`, not `h-full`: the tab panel is an auto-height flex item,
+    // so a percentage height here would resolve to auto and let the message
+    // list push the composer off the bottom of the viewport.
+    <div className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-stone-200 px-4 py-2 dark:border-zinc-800">
         <div
           role="group"
@@ -226,7 +230,7 @@ export function Chat({
             type="button"
             onClick={() => setPanelOpen((o) => !o)}
             aria-expanded={panelOpen}
-            className="pressable focus-ring flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-3 py-1 text-xs font-semibold text-stone-600 hover:border-emerald-300 hover:text-stone-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-emerald-500/60 dark:hover:text-zinc-50"
+            className="pressable focus-ring flex items-center gap-1.5 rounded-full border-2 border-stone-200 px-3 py-1 text-xs font-semibold text-stone-600 hover:border-emerald-300 hover:text-stone-900 dark:border-zinc-600 dark:text-zinc-200 dark:hover:border-emerald-400 dark:hover:text-zinc-50"
           >
             Mistakes
             {/* Keying on the count remounts the span, which is what restarts
@@ -241,9 +245,16 @@ export function Chat({
         )}
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-6">
+      {/* Empty, the welcome block sits in the middle of the free space rather
+          than hugging the top; once there are messages the column goes back to
+          normal top-down flow. */}
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto px-4 py-6 ${
+          messages.length === 0 ? "flex flex-col" : "space-y-3"
+        }`}
+      >
         {messages.length === 0 && (
-          <div className="flex flex-col items-center gap-4 pt-10 text-center">
+          <div className="my-auto flex flex-col items-center gap-4 text-center">
             <LogoMark className="h-14 w-14 text-lg" />
             <h2 className="text-lg font-bold tracking-tight">
               Hello! Let&apos;s speak German.
@@ -257,9 +268,17 @@ export function Chat({
               <button
                 type="button"
                 onClick={startFirstLesson}
-                className="btn-3d btn-3d-primary focus-ring px-5 py-2.5 text-sm"
+                className="btn-3d btn-3d-primary focus-ring max-w-full px-5 py-2.5"
               >
-                Start Lesson 1: {lessonsForLevel(level)[0].title}
+                {/* Two deliberate lines rather than one long one: a 30-character
+                    lesson title wraps unpredictably at 375px when it is glued
+                    to the verb. */}
+                <span className="block text-sm leading-snug">
+                  Start Lesson 1
+                </span>
+                <span className="mt-0.5 block text-xs leading-snug font-medium text-balance opacity-90">
+                  {lessonsForLevel(level)[0].title}
+                </span>
               </button>
             )}
             <div className="flex flex-wrap justify-center gap-2">
@@ -277,7 +296,7 @@ export function Chat({
                   key={s}
                   type="button"
                   onClick={() => applySuggestion(s)}
-                  className="pressable focus-ring rounded-2xl border-2 border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-600 hover:border-emerald-300 hover:text-stone-900 hover:shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:border-emerald-500/60 dark:hover:text-zinc-50"
+                  className="pressable focus-ring rounded-2xl border-2 border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-600 hover:border-emerald-300 hover:text-stone-900 hover:shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:border-emerald-400 dark:hover:text-zinc-50"
                 >
                   {s}
                 </button>
@@ -422,24 +441,36 @@ function ErrorPanel({
   errors: CorrectionError[];
   onClose: () => void;
 }) {
+  const { containerRef, closeRef } = useDialog<HTMLElement>(onClose);
+  const titleId = "mistakes-panel-title";
+
   return (
     <>
+      {/* The backdrop is a click target, not a tab stop: the dialog's own close
+          button and Escape are the keyboard routes out. */}
       <button
         type="button"
-        aria-label="Close the mistake list"
+        tabIndex={-1}
+        aria-hidden="true"
         onClick={onClose}
         className="absolute inset-0 z-20 cursor-default bg-stone-900/25 dark:bg-black/50"
       />
       <aside
-        aria-label="Your mistakes"
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="animate-message-in absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l-2 border-stone-200 bg-white shadow-xl sm:w-80 dark:border-zinc-700 dark:bg-zinc-800"
       >
         <div className="flex items-center justify-between border-b-2 border-stone-200 px-4 py-3 dark:border-zinc-700">
-          <h2 className="text-sm font-bold">Your mistakes</h2>
+          <h2 id={titleId} className="text-sm font-bold">
+            Your mistakes
+          </h2>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label="Close the mistake list"
             className="pressable focus-ring flex h-8 w-8 items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 hover:text-stone-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-100"
           >
             ×

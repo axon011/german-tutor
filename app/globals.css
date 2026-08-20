@@ -36,6 +36,12 @@
 
   --ring: #059669;
 
+  /* Text inputs. Split from the generic surface/line tokens because a field
+   * has to read as a field — on dark it needs more edge than a panel does. */
+  --field-bg: var(--surface);
+  --field-line: var(--line);
+  --placeholder-opacity: 0.7;
+
   /* German flag, adjusted per theme so the black band stays visible. */
   --flag-black: #000000;
   --flag-red: #dd0000;
@@ -71,6 +77,12 @@
 
     --ring: #34d399;
 
+    /* zinc-800 at 60% over the zinc-900 page is visibly a well, and zinc-600
+     * is the first border that survives at 2px against it. */
+    --field-bg: rgba(39, 39, 42, 0.6);
+    --field-line: #52525b; /* zinc-600 */
+    --placeholder-opacity: 0.95;
+
     /* Pure black would vanish against the dark page. */
     --flag-black: #52525b;
   }
@@ -94,6 +106,46 @@ body {
     var(--flag-red) 33.3333% 66.6666%,
     var(--flag-gold) 66.6666% 100%
   );
+}
+
+/* The ground the app sits on. Below `lg` the app is full-bleed and this is just
+ * the page colour; from `lg` up the app becomes a framed panel and the backdrop
+ * picks up a soft off-centre tint — warm gold above, emerald below — so the
+ * panel reads as floating rather than stranded. */
+.app-backdrop {
+  background-color: var(--background);
+}
+
+@media (min-width: 1024px) {
+  .app-backdrop {
+    background-image:
+      radial-gradient(
+        60rem 34rem at 50% -8%,
+        rgba(245, 158, 11, 0.13),
+        transparent 70%
+      ),
+      radial-gradient(
+        48rem 32rem at 88% 108%,
+        rgba(5, 150, 105, 0.11),
+        transparent 70%
+      );
+  }
+}
+
+@media (min-width: 1024px) and (prefers-color-scheme: dark) {
+  .app-backdrop {
+    background-image:
+      radial-gradient(
+        60rem 34rem at 50% -8%,
+        rgba(245, 158, 11, 0.07),
+        transparent 70%
+      ),
+      radial-gradient(
+        48rem 32rem at 88% 108%,
+        rgba(16, 185, 129, 0.07),
+        transparent 70%
+      );
+  }
 }
 
 /* Slow shimmer across the logo mark. Cosmetic — dies under reduced motion. */
@@ -169,8 +221,10 @@ body {
   margin-bottom: 4px;
 }
 
+/* Disabled has to read as "not yet", not as "broken" — at 0.4 the send button
+ * looked like a dead grey-green lozenge on dark. */
 .btn-3d:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
 }
 
 /* Primary (emerald) variant. */
@@ -193,8 +247,8 @@ body {
 /* Text inputs: big, rounded, 2px border, emerald focus. */
 .field {
   border-radius: 1rem;
-  border: 2px solid var(--line);
-  background-color: var(--surface);
+  border: 2px solid var(--field-line);
+  background-color: var(--field-bg);
   color: var(--foreground);
   outline: none;
   transition:
@@ -204,7 +258,7 @@ body {
 
 .field::placeholder {
   color: var(--muted);
-  opacity: 0.7;
+  opacity: var(--placeholder-opacity);
 }
 
 .field:focus {
