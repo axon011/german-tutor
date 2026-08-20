@@ -4,7 +4,7 @@ An AI German tutor that **remembers every mistake you make and builds your curri
 
 Duolingo teaches everyone the same German; ChatGPT forgets your mistakes. This app logs every error you make in real conversation, turns them into drills, and tells you what to practice next.
 
-**Status:** feature-complete, runs locally — Vercel deployment (Gemini provider) is the next step · **Stack:** Next.js (App Router) · TypeScript · Tailwind · SSE streaming · Zod
+**Live:** [german-tutor-weld.vercel.app](https://german-tutor-weld.vercel.app) · **Stack:** Next.js (App Router) · TypeScript · Tailwind · SSE streaming · Zod
 
 ## What it does
 
@@ -41,7 +41,7 @@ flowchart LR
 
 Design decisions worth reading the code for:
 
-- **The provider seam** (`lib/llm/provider.ts`): every model call goes through one `streamChat` interface. Local dev spawns the Claude Code CLI; the deployment speaks HTTPS to Gemini. Swapping providers is one env var.
+- **The provider seam** (`lib/llm/provider.ts`): every model call goes through one `streamChat` interface. Local dev spawns the Claude Code CLI; the deployment streams from Groq (gpt-oss-120b) over HTTPS, with a Gemini provider as an alternative. Swapping providers is one env var.
 - **Persistent CLI session** (`lib/llm/claude-code.ts`): instead of paying ~2 s of CLI bootstrap per message, one long-lived process serves the whole conversation over `stream-json` stdin/stdout. Warm-turn time-to-first-token: **under 1 second**. The file documents every Windows/CLI trap found on the way.
 - **Two agents per turn, never blocking**: the conversation reply streams immediately; a parallel Corrector (stronger model — wrong grammar explanations are poison) annotates the message 1–2 s later with exact-substring error spans.
 - **The recommender is a formula, not an LLM**: `weight = e^(-age_days / 7)` summed per error type. Explainable, free, and testable.
