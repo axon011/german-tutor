@@ -1,6 +1,7 @@
 import type { LLMProvider } from "./provider";
 import { ClaudeCodeProvider } from "./claude-code";
 import { GeminiProvider } from "./gemini";
+import { GroqProvider } from "./groq";
 
 /**
  * Provider selection: LLM_PROVIDER=claude-code (local dev) | gemini (Vercel).
@@ -37,6 +38,10 @@ export function getProvider(role: ProviderRole): LLMProvider {
     case "gemini":
       // Gemini is stateless HTTPS; the roles differ only in system prompt.
       provider = new GeminiProvider();
+      break;
+    case "groq":
+      // Groq free tier (no card). Stateless HTTPS like Gemini.
+      provider = new GroqProvider();
       break;
     default:
       throw new Error(`Unknown LLM_PROVIDER: ${name}`);
