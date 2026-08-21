@@ -1,14 +1,12 @@
 /**
- * The "DT" gold mark. Pure CSS/text — no image assets.
- * Size and text size come from the caller via className.
- * The amber gradient pans slowly (`.logo-shimmer`); it is decoration, so it
- * stops entirely under `prefers-reduced-motion`.
+ * The "DT" mark: a gold square carrying ink letterforms in the display face.
+ * Pure CSS/text — no image assets. Size and text size come from the caller.
  */
 export function LogoMark({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`logo-shimmer inline-flex shrink-0 select-none items-center justify-center rounded-full font-bold tracking-tight text-amber-950 shadow-sm ${className}`}
+      className={`font-display text-gold-ink bg-gold inline-flex shrink-0 items-center justify-center rounded-sm font-bold tracking-tight select-none ${className}`}
     >
       DT
     </span>

@@ -1,12 +1,13 @@
-import type { CefrLevel } from "@/lib/tutor-prompt";
-
 /**
- * One hue per CEFR level, so a level reads as an identity rather than as a
- * position on a scale. Tinted chip + darker text clears AA in both themes.
+ * CEFR levels are squares in one ink/gold system, not four hues: a level is a
+ * position on a scale, and the only thing worth colouring is which one is
+ * selected. `LEVEL_CHIP` is the resting badge, `LEVEL_CHIP_ON` the selected
+ * state — gold fill, ink text, which clears AA in both themes.
+ *
+ * Padding and text size stay with the caller.
  */
-export const LEVEL_CHIP: Record<CefrLevel, string> = {
-  A1: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
-  A2: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
-  B1: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300",
-  B2: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-300",
-};
+export const LEVEL_CHIP =
+  "font-display rounded-sm border-2 border-ink/40 text-ink font-semibold";
+
+export const LEVEL_CHIP_ON =
+  "font-display rounded-sm border-2 border-ink bg-gold text-gold-ink font-semibold";

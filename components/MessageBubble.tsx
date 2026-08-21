@@ -3,7 +3,6 @@
 import { useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
-import { LogoMark } from "./LogoMark";
 
 export function MessageBubble({
   message,
@@ -27,19 +26,19 @@ export function MessageBubble({
         isUser ? "items-end" : "items-start"
       }`}
     >
-      <div
-        className={`flex max-w-[80%] items-end gap-2 ${
-          isUser ? "justify-end" : "justify-start"
-        }`}
-      >
-        {!isUser && <LogoMark className="h-7 w-7 text-[10px]" />}
+      {/* No bubbles. The tutor is set as body copy behind a gold rule with a
+          printed byline; the learner's own words are the solid ink block. */}
+      <div className={isUser ? "flex max-w-[82%] justify-end" : "w-full"}>
         <div
-          className={`whitespace-pre-wrap rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed ${
+          className={
             isUser
-              ? "rounded-br-md bg-emerald-700 text-white dark:bg-emerald-600"
-              : "rounded-bl-md bg-stone-100 text-stone-900 dark:bg-zinc-800 dark:text-zinc-100"
-          }`}
+              ? "bg-ink text-on-ink rounded-sm px-3.5 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap"
+              : "border-gold text-ink border-l-[3px] pl-3 text-[15px] leading-relaxed whitespace-pre-wrap"
+          }
         >
+          {!isUser && (
+            <span className="kicker text-muted mb-1 block">Tutor</span>
+          )}
           {segments
             ? segments.map((seg, i) =>
                 seg.errorIndex === undefined ? (
@@ -57,10 +56,8 @@ export function MessageBubble({
                     // The spans mount when the corrector's answer lands, a
                     // second or two after the message — the pulse is what
                     // tells the learner something just changed.
-                    className={`correction-pulse focus-ring cursor-pointer rounded-sm underline decoration-red-300 decoration-wavy decoration-2 underline-offset-4 transition-colors hover:decoration-red-200 ${
-                      openIndex === seg.errorIndex
-                        ? "bg-red-300/25 decoration-red-200"
-                        : ""
+                    className={`correction-pulse focus-ring decoration-danger-on-ink cursor-pointer rounded-sm underline decoration-wavy decoration-2 underline-offset-4 transition-colors ${
+                      openIndex === seg.errorIndex ? "bg-danger-on-ink/30" : ""
                     }`}
                   >
                     {seg.text}
@@ -72,25 +69,18 @@ export function MessageBubble({
       </div>
 
       {open && (
-        <div className="max-w-[80%] rounded-2xl border-2 border-stone-200 bg-white px-3 py-2.5 text-xs shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+        <div className="border-line border-l-danger bg-surface max-w-[86%] rounded-sm border-2 border-l-[3px] px-3 py-2.5 text-xs">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-red-700 line-through dark:text-red-300">
-              {open.span}
-            </span>
-            <span
-              aria-hidden="true"
-              className="text-stone-400 dark:text-zinc-500"
-            >
+            <span className="text-danger line-through">{open.span}</span>
+            <span aria-hidden="true" className="text-muted">
               →
             </span>
-            <span className="font-semibold text-green-700 dark:text-green-300">
+            <span className="text-success font-semibold">
               {open.correction}
             </span>
             <TypeChip type={open.type} />
           </div>
-          <p className="mt-1 leading-relaxed text-stone-600 dark:text-zinc-400">
-            {open.explanation}
-          </p>
+          <p className="text-muted mt-1 leading-relaxed">{open.explanation}</p>
         </div>
       )}
     </div>
@@ -99,7 +89,7 @@ export function MessageBubble({
 
 export function TypeChip({ type }: { type: CorrectionError["type"] }) {
   return (
-    <span className="rounded-full bg-stone-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 dark:bg-zinc-700 dark:text-zinc-300">
+    <span className="font-display border-line text-muted rounded-sm border-2 px-1.5 py-px text-[9px] font-semibold tracking-[0.12em] uppercase">
       {type}
     </span>
   );

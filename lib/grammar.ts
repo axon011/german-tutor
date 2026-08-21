@@ -47,15 +47,19 @@ export const GRAMMAR_CATEGORIES: GrammarCategory[] = [
 
 /**
  * Everything the UI needs to render a category: its English label and the
- * Tailwind classes for its hue. Kept here so a card, a filter chip, a sheet
- * header and a highlighted example word can never drift apart — and so the
- * class strings are literal, which is what Tailwind's scanner needs.
+ * Tailwind classes for its spot colour. Kept here so a card, a filter chip, a
+ * sheet header and a highlighted example word can never drift apart — and so
+ * the class strings are literal, which is what Tailwind's scanner needs.
+ *
+ * The five families are print spot-colours, not a second palette: the card
+ * itself stays a neutral surface and only the glyph, the dot and the marked
+ * words carry the hue, so the grid still reads as ink on paper.
  */
 export const CATEGORY_META: Record<
   GrammarCategory,
   {
     label: string;
-    /** Grid-card ground + border. */
+    /** Grid-card ground + border — neutral in every category. */
     card: string;
     /** Glyph and other accent text on that ground. */
     accent: string;
@@ -69,43 +73,43 @@ export const CATEGORY_META: Record<
 > = {
   verbs: {
     label: "Verbs",
-    card: "bg-rose-50 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/25",
-    accent: "text-rose-700 dark:text-rose-300",
-    dot: "bg-rose-500",
-    chip: "bg-rose-100 text-rose-800 dark:bg-rose-500/15 dark:text-rose-200",
-    mark: "bg-rose-200/60 text-rose-900 dark:bg-rose-500/20 dark:text-rose-200",
+    card: "bg-surface border-line",
+    accent: "text-spot-brick",
+    dot: "bg-spot-brick",
+    chip: "border-2 border-spot-brick/50 text-spot-brick",
+    mark: "bg-spot-brick/15 text-spot-brick",
   },
   cases: {
     label: "Cases & articles",
-    card: "bg-violet-50 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/25",
-    accent: "text-violet-700 dark:text-violet-300",
-    dot: "bg-violet-500",
-    chip: "bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-200",
-    mark: "bg-violet-200/60 text-violet-900 dark:bg-violet-500/20 dark:text-violet-200",
+    card: "bg-surface border-line",
+    accent: "text-spot-plum",
+    dot: "bg-spot-plum",
+    chip: "border-2 border-spot-plum/50 text-spot-plum",
+    mark: "bg-spot-plum/15 text-spot-plum",
   },
   "word-order": {
     label: "Word order",
-    card: "bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/25",
-    accent: "text-sky-700 dark:text-sky-300",
-    dot: "bg-sky-500",
-    chip: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-200",
-    mark: "bg-sky-200/60 text-sky-900 dark:bg-sky-500/20 dark:text-sky-200",
+    card: "bg-surface border-line",
+    accent: "text-spot-prussian",
+    dot: "bg-spot-prussian",
+    chip: "border-2 border-spot-prussian/50 text-spot-prussian",
+    mark: "bg-spot-prussian/15 text-spot-prussian",
   },
   nouns: {
     label: "Nouns & pronouns",
-    card: "bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/25",
-    accent: "text-emerald-700 dark:text-emerald-300",
-    dot: "bg-emerald-500",
-    chip: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200",
-    mark: "bg-emerald-200/60 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-200",
+    card: "bg-surface border-line",
+    accent: "text-spot-olive",
+    dot: "bg-spot-olive",
+    chip: "border-2 border-spot-olive/50 text-spot-olive",
+    mark: "bg-spot-olive/15 text-spot-olive",
   },
   style: {
     label: "Style & register",
-    card: "bg-orange-50 border-orange-200 dark:bg-orange-500/10 dark:border-orange-500/25",
-    accent: "text-orange-700 dark:text-orange-300",
-    dot: "bg-orange-500",
-    chip: "bg-orange-100 text-orange-800 dark:bg-orange-500/15 dark:text-orange-200",
-    mark: "bg-orange-200/60 text-orange-900 dark:bg-orange-500/20 dark:text-orange-200",
+    card: "bg-surface border-line",
+    accent: "text-spot-rust",
+    dot: "bg-spot-rust",
+    chip: "border-2 border-spot-rust/50 text-spot-rust",
+    mark: "bg-spot-rust/15 text-spot-rust",
   },
 };
 

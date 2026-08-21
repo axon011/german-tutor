@@ -106,14 +106,14 @@ export function AppShell() {
 
   const tablistRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<Tab, HTMLButtonElement>());
-  /** Geometry of the emerald pill, measured from the active tab button. */
+  /** Geometry of the gold underline, measured from the active tab button. */
   const [pill, setPill] = useState<{ left: number; width: number } | null>(
     null,
   );
 
-  // The pill is one absolutely-positioned element that slides between buttons,
-  // so its geometry has to be read from the DOM. useLayoutEffect (not useEffect)
-  // keeps the very first paint from showing it in the wrong place.
+  // The underline is one absolutely-positioned element that slides between
+  // buttons, so its geometry has to be read from the DOM. useLayoutEffect (not
+  // useEffect) keeps the very first paint from showing it in the wrong place.
   useLayoutEffect(() => {
     const list = tablistRef.current;
     const measure = () => {
@@ -148,31 +148,31 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-      <header className="shrink-0 border-b-2 border-stone-200 dark:border-zinc-800">
+      <header className="border-line shrink-0 border-b-2">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2.5">
           <div className="flex items-center gap-2.5">
             <LogoMark className="h-9 w-9 text-sm" />
             <div>
-              <h1 className="text-base font-bold leading-tight tracking-tight">
-                Deutsch-Tutor
+              <h1 className="font-display text-base leading-tight font-bold tracking-tight">
+                DEUTSCH—TUTOR
               </h1>
-              <p className="hidden text-xs leading-tight text-stone-500 sm:block dark:text-zinc-400">
-                A1 → B2, ein Gespräch nach dem anderen
+              <p className="kicker text-muted mt-0.5 hidden sm:block">
+                A1 → B2 · Ein Gespräch nach dem anderen
               </p>
             </div>
           </div>
 
-          {/* Wide viewports keep the sliding-pill row; phones get the bottom
-              bar below instead. */}
+          {/* Wide viewports keep the sliding-underline row; phones get the
+              bottom bar below instead. */}
           <div
             ref={tablistRef}
             role="tablist"
             aria-label="Sections"
-            className="relative hidden items-center gap-0.5 rounded-full bg-stone-100 p-1 sm:flex dark:bg-zinc-800"
+            className="relative hidden items-end gap-1 pb-1.5 sm:flex"
           >
             <span
               aria-hidden="true"
-              className="tab-pill absolute left-0 top-1 bottom-1 rounded-full bg-emerald-700 shadow-sm dark:bg-emerald-500"
+              className="tab-underline bg-gold absolute bottom-0 left-0 h-[3px]"
               style={{
                 width: pill?.width ?? 0,
                 transform: `translateX(${pill?.left ?? 0}px)`,
@@ -194,10 +194,8 @@ export function AppShell() {
                   aria-selected={active}
                   aria-controls={`panel-${id}`}
                   onClick={() => select(id)}
-                  className={`pressable focus-ring relative z-10 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${
-                    active
-                      ? "text-white dark:text-emerald-950"
-                      : "text-stone-600 hover:text-stone-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                  className={`pressable focus-ring font-display relative z-10 px-2 py-1 text-[11px] font-semibold tracking-[0.12em] whitespace-nowrap uppercase ${
+                    active ? "text-ink" : "text-muted hover:text-ink"
                   }`}
                 >
                   {label}
@@ -278,7 +276,7 @@ export function AppShell() {
           bottom result without the content ever sliding underneath it. */}
       <nav
         aria-label="Sections"
-        className="shrink-0 border-t-2 border-stone-200 bg-[var(--surface)] pb-[env(safe-area-inset-bottom)] sm:hidden dark:border-zinc-800 dark:bg-[var(--background)]"
+        className="border-line bg-surface shrink-0 border-t-2 pb-[env(safe-area-inset-bottom)] sm:hidden"
       >
         <div className="mx-auto flex w-full max-w-2xl items-stretch">
           {TABS.map(({ id, label }) => {
@@ -290,18 +288,14 @@ export function AppShell() {
                 aria-current={active ? "page" : undefined}
                 aria-controls={`panel-${id}`}
                 onClick={() => select(id)}
-                className={`focus-ring relative flex flex-1 flex-col items-center gap-0.5 px-1 pt-2.5 pb-2 text-[10px] font-semibold transition-colors ${
-                  active
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-stone-500 dark:text-zinc-400"
+                className={`focus-ring font-display relative flex flex-1 flex-col items-center gap-0.5 px-1 pt-2.5 pb-2 text-[9.5px] font-semibold tracking-[0.08em] uppercase transition-colors ${
+                  active ? "text-ink" : "text-muted"
                 }`}
               >
                 <span
                   aria-hidden="true"
-                  className={`absolute top-0 h-1 w-8 rounded-b-full transition-opacity ${
-                    active
-                      ? "bg-emerald-600 opacity-100 dark:bg-emerald-400"
-                      : "opacity-0"
+                  className={`bg-gold absolute top-0 h-[3px] w-1/2 transition-opacity ${
+                    active ? "opacity-100" : "opacity-0"
                   }`}
                 />
                 {ICONS[id]}

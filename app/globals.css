@@ -1,46 +1,57 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
- * Palette. Every colour the chrome uses is a token here, so the whole app can
- * be re-hued by editing this block alone.
+ * Bauhaus Editorial — the whole visual identity lives in this token block.
  *
- * Light is the primary design target; dark redefines the same names.
+ * German print heritage rather than SaaS: warm paper, ink, structural gold.
+ * GOLD is the active state — selection, the tab underline, meters, rules under
+ * headings — and it ALWAYS carries ink text, never white. Red is reserved for
+ * errors, green for corrections and success. Nothing else is coloured.
  *
- * Emerald is the HERO — primary actions, active navigation, focus rings, the
- * learner's own chat bubbles, progress fills. Gold is BRAND only: the logo
- * mark, the tricolor rule, completion and streak moments.
+ * Light is the primary target; the dark block redefines the same names, so
+ * every utility built on them flips without a second class.
  * ------------------------------------------------------------------------- */
 
 :root {
   /* Surfaces and text */
-  --background: #fafaf9; /* stone-50 */
-  --foreground: #1c1917; /* stone-900 */
+  --background: #f7f5f0; /* paper */
+  --backdrop: #eae6dd; /* the ground the desktop panel sits on */
   --surface: #ffffff;
-  --surface-muted: #f5f5f4; /* stone-100 */
-  --line: #e7e5e4; /* stone-200 */
-  --muted: #57534e; /* stone-600 */
+  --foreground: #16140f; /* ink */
+  --on-ink: #f7f5f0; /* text on a solid ink fill */
+  --muted: #6e6759;
 
-  /* Hero — emerald.
-   * `accent` is for graphics (fills, borders, rings) where 3:1 is the bar.
-   * `accent-strong` is for fills that carry text: white on #047857 is 5.5:1. */
-  --accent-bright: #10b981; /* emerald-500 — meters, indicators */
-  --accent: #059669; /* emerald-600 — borders, rings, graphics */
-  --accent-strong: #047857; /* emerald-700 — text-bearing fills */
-  --accent-soft: #ecfdf5; /* emerald-50 */
+  /* Hairlines and card edges — ink at low alpha, so they sit on any surface. */
+  --line: rgba(22, 20, 15, 0.15);
+  --line-strong: rgba(22, 20, 15, 0.22);
 
-  /* The 3D button stack: face, hover face, bottom edge, label. */
-  --btn-face: #047857; /* emerald-700 */
-  --btn-face-hover: #065f46; /* emerald-800 */
-  --btn-edge: #064e3b; /* emerald-900 */
-  --btn-label: #ffffff;
+  /* Structural gold. `--gold-ink` never changes: gold is the same colour in
+   * both themes, so the text on it has to be the same near-black in both. */
+  --gold: #f5b800;
+  --gold-ink: #16140f;
 
-  --ring: #059669;
+  --red: #dd2c1c;
+  --green: #1c7c54;
+  --on-green: #ffffff;
+  /* Wavy correction underline sitting on the learner's ink block. */
+  --red-on-ink: #ff8a7a;
 
-  /* Text inputs. Split from the generic surface/line tokens because a field
-   * has to read as a field — on dark it needs more edge than a panel does. */
+  /* Print spot colours for the five grammar families. Desaturated on purpose —
+   * they have to read as ink variants, not as a second palette. */
+  --spot-brick: #a33a2b;
+  --spot-prussian: #1f4e79;
+  --spot-olive: #55671f;
+  --spot-rust: #a35a1f;
+  --spot-plum: #6b3560;
+
+  /* Hard offset shadow — the signature. No blur, no spread. */
+  --shadow-a: rgba(22, 20, 15, 0.25);
+  --shadow-a-lg: rgba(22, 20, 15, 0.1);
+
+  /* Text inputs need more edge than a card does. */
   --field-bg: var(--surface);
-  --field-line: var(--line);
-  --placeholder-opacity: 0.7;
+  --field-line: rgba(22, 20, 15, 0.45);
+  --placeholder-opacity: 0.75;
 
   /* German flag, adjusted per theme so the black band stays visible. */
   --flag-black: #000000;
@@ -48,44 +59,73 @@
   --flag-gold: #ffcc00;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #18181b; /* zinc-900 */
-    --foreground: #fafafa;
-    --surface: #27272a; /* zinc-800 */
-    --surface-muted: #27272a;
-    --line: #3f3f46; /* zinc-700 */
-    --muted: #a1a1aa; /* zinc-400 */
+    --background: #131210;
+    --backdrop: #0c0b0a;
+    --surface: #1c1a17;
+    --foreground: #efebe2; /* bone */
+    --on-ink: #131210;
+    --muted: #9a937f;
 
-    --accent-bright: #34d399; /* emerald-400 */
-    --accent: #10b981; /* emerald-500 */
-    --accent-strong: #10b981;
-    --accent-soft: rgba(16, 185, 129, 0.12);
+    --line: rgba(239, 235, 226, 0.15);
+    --line-strong: rgba(239, 235, 226, 0.22);
 
-    /* Bright face, near-black-green label: 5.8:1 and far more alive on dark. */
-    --btn-face: #10b981; /* emerald-500 */
-    --btn-face-hover: #34d399; /* emerald-400 */
-    --btn-edge: #047857; /* emerald-700 */
-    --btn-label: #022c22; /* emerald-950 */
+    --red: #ff5c4a;
+    --green: #4cc08a;
+    --on-green: #131210;
+    --red-on-ink: #dd2c1c;
 
-    --ring: #34d399;
+    --spot-brick: #e08a78;
+    --spot-prussian: #86b4dd;
+    --spot-olive: #b0c477;
+    --spot-rust: #dc9b5c;
+    --spot-plum: #c79ac0;
 
-    /* zinc-800 at 60% over the zinc-900 page is visibly a well, and zinc-600
-     * is the first border that survives at 2px against it. */
-    --field-bg: rgba(39, 39, 42, 0.6);
-    --field-line: #52525b; /* zinc-600 */
-    --placeholder-opacity: 0.95;
+    --shadow-a: rgba(0, 0, 0, 0.5);
+    --shadow-a-lg: rgba(0, 0, 0, 0.45);
+
+    --field-bg: rgba(255, 255, 255, 0.04);
+    --field-line: rgba(239, 235, 226, 0.4);
+    --placeholder-opacity: 0.9;
 
     /* Pure black would vanish against the dark page. */
-    --flag-black: #52525b;
+    --flag-black: #4a4740;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-backdrop: var(--backdrop);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--foreground);
+  --color-on-ink: var(--on-ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-danger: var(--red);
+  --color-danger-on-ink: var(--red-on-ink);
+  --color-success: var(--green);
+  --color-on-success: var(--on-green);
+
+  --color-spot-brick: var(--spot-brick);
+  --color-spot-prussian: var(--spot-prussian);
+  --color-spot-olive: var(--spot-olive);
+  --color-spot-rust: var(--spot-rust);
+  --color-spot-plum: var(--spot-plum);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  /* The display face: wordmark, headings, tab labels, buttons, numbers. */
+  --font-display: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
+
+  --shadow-hard: 3px 3px 0 0 var(--shadow-a);
+  --shadow-hard-lg: 6px 6px 0 0 var(--shadow-a-lg);
+
+  --radius-sm: 2px;
 }
 
 body {
@@ -109,66 +149,42 @@ body {
 }
 
 /* The ground the app sits on. Below `lg` the app is full-bleed and this is just
- * the page colour; from `lg` up the app becomes a framed panel and the backdrop
- * picks up a soft off-centre tint — warm gold above, emerald below — so the
- * panel reads as floating rather than stranded. */
+ * the paper colour; from `lg` up the app becomes a framed panel and the page
+ * behind it drops a shade so the frame reads as a printed card on a desk. */
 .app-backdrop {
   background-color: var(--background);
 }
 
 @media (min-width: 1024px) {
   .app-backdrop {
-    background-image:
-      radial-gradient(
-        60rem 34rem at 50% -8%,
-        rgba(245, 158, 11, 0.13),
-        transparent 70%
-      ),
-      radial-gradient(
-        48rem 32rem at 88% 108%,
-        rgba(5, 150, 105, 0.11),
-        transparent 70%
-      );
+    background-color: var(--backdrop);
   }
 }
 
-@media (min-width: 1024px) and (prefers-color-scheme: dark) {
-  .app-backdrop {
-    background-image:
-      radial-gradient(
-        60rem 34rem at 50% -8%,
-        rgba(245, 158, 11, 0.07),
-        transparent 70%
-      ),
-      radial-gradient(
-        48rem 32rem at 88% 108%,
-        rgba(16, 185, 129, 0.07),
-        transparent 70%
-      );
-  }
-}
+/* ---------------------------------------------------------------------------
+ * Editorial furniture
+ * ------------------------------------------------------------------------- */
 
-/* Slow shimmer across the logo mark. Cosmetic — dies under reduced motion. */
-@keyframes logo-shimmer {
-  from {
-    background-position: 0% 50%;
+/* These two are in `components` on purpose: a caller has to be able to shrink a
+ * kicker with `text-[9px]`, and only a layered rule loses to a utility. */
+@layer components {
+  /* Uppercase micro-label: section kickers, "TUTOR", tile captions. */
+  .kicker {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 11px;
+    line-height: 1.3;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
-  to {
-    background-position: -200% 50%;
-  }
-}
 
-.logo-shimmer {
-  background-image: linear-gradient(
-    110deg,
-    #fcd34d 0%,
-    #fde68a 25%,
-    #f59e0b 50%,
-    #fde68a 75%,
-    #fcd34d 100%
-  );
-  background-size: 200% 100%;
-  animation: logo-shimmer 6s linear infinite;
+  /* The 3px gold bar that sits under a section kicker. */
+  .gold-rule {
+    display: block;
+    height: 3px;
+    width: 2.5rem;
+    background-color: var(--gold);
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -176,7 +192,7 @@ body {
  * ------------------------------------------------------------------------- */
 
 /* The subtle press affordance — chips, cards, icon buttons, tabs. Primary
- * actions use `.btn-3d` instead. The property list also covers what
+ * actions use `.btn-hard` instead. The property list also covers what
  * `transition-colors`/`transition-opacity` used to do, since this rule wins
  * over them. */
 .pressable {
@@ -189,64 +205,69 @@ body {
     opacity 120ms ease-out;
 }
 
-.pressable:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
 .pressable:active:not(:disabled) {
-  transform: scale(0.96);
+  transform: translate(1px, 1px);
 }
 
-/* The chunky primary action: a solid darker bottom edge that the button sinks
- * into when pressed. Padding and text size stay with the caller; everything
- * that makes it a 3D button lives here.
- *
- * The 3px translate on press exactly consumes the 4px edge minus the 1px the
- * border still paints, so the button's top edge is what appears to move. */
-.btn-3d {
-  border-radius: 1rem;
+/* The signature action: a solid block with a hard offset shadow that collapses
+ * as the block travels into it. Padding and text size stay with the caller. */
+.btn-hard {
+  border-radius: 2px;
+  font-family: var(--font-display);
   font-weight: 600;
-  border-bottom-width: 4px;
-  border-bottom-style: solid;
+  letter-spacing: 0.04em;
+  box-shadow: 3px 3px 0 0 var(--shadow-a);
   transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
     background-color 120ms ease-out,
     border-color 120ms ease-out,
-    transform 80ms ease-out,
+    color 120ms ease-out,
     opacity 120ms ease-out;
 }
 
-.btn-3d:active:not(:disabled) {
-  border-bottom-width: 0;
-  transform: translateY(3px);
-  margin-bottom: 4px;
+.btn-hard:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--shadow-a);
 }
 
-/* Disabled has to read as "not yet", not as "broken" — at 0.4 the send button
- * looked like a dead grey-green lozenge on dark. */
-.btn-3d:disabled {
-  opacity: 0.55;
+/* Disabled has to read as "not yet", not as "broken". */
+.btn-hard:disabled {
+  opacity: 0.5;
+  box-shadow: 1px 1px 0 0 var(--shadow-a);
 }
 
-/* Primary (emerald) variant. */
-.btn-3d-primary {
-  background-color: var(--btn-face);
-  border-bottom-color: var(--btn-edge);
-  color: var(--btn-label);
+/* Solid ink block, paper label — inverted on dark, where ink is bone. */
+.btn-hard-primary {
+  background-color: var(--foreground);
+  color: var(--on-ink);
 }
 
-.btn-3d-primary:hover:not(:disabled) {
-  background-color: var(--btn-face-hover);
+.btn-hard-primary:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--foreground) 88%, var(--gold));
+}
+
+/* Outlined counterpart for secondary actions. */
+.btn-hard-ghost {
+  background-color: transparent;
+  color: var(--foreground);
+  border: 2px solid var(--foreground);
+}
+
+.btn-hard-ghost:hover:not(:disabled) {
+  background-color: var(--gold);
+  color: var(--gold-ink);
 }
 
 /* The single focus treatment used everywhere. */
 .focus-ring:focus-visible {
-  outline: 2px solid var(--ring);
+  outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
 
-/* Text inputs: big, rounded, 2px border, emerald focus. */
+/* Text inputs: square, 2px ink border, gold focus. */
 .field {
-  border-radius: 1rem;
+  border-radius: 2px;
   border: 2px solid var(--field-line);
   background-color: var(--field-bg);
   color: var(--foreground);
@@ -262,8 +283,8 @@ body {
 }
 
 .field:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent);
 }
 
 .field:disabled {
@@ -279,8 +300,8 @@ body {
   transition: width 300ms ease-out;
 }
 
-/* The sliding active-tab pill. */
-.tab-pill {
+/* The sliding gold underline beneath the active desktop tab. */
+.tab-underline {
   transition:
     transform 200ms ease-out,
     width 200ms ease-out,
@@ -306,21 +327,20 @@ body {
   animation: message-in 150ms ease-out both;
 }
 
-@keyframes typing-dot {
+/* Three squares stepping, not dots bouncing — hard on/off, no easing. */
+@keyframes typing-square {
   0%,
   60%,
   100% {
-    transform: translateY(0);
-    opacity: 0.45;
+    opacity: 0.3;
   }
   30% {
-    transform: translateY(-3px);
     opacity: 1;
   }
 }
 
-.animate-typing-dot {
-  animation: typing-dot 1.1s ease-in-out infinite;
+.animate-typing-square {
+  animation: typing-square 1.05s steps(1, end) infinite;
 }
 
 @keyframes button-spin {
@@ -373,7 +393,7 @@ body {
     background-color: transparent;
   }
   50% {
-    background-color: rgba(252, 165, 165, 0.4);
+    background-color: color-mix(in srgb, var(--red-on-ink) 35%, transparent);
   }
 }
 
@@ -451,46 +471,14 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
- * Cosmetic: the focus card's slowly travelling gradient border.
- * ------------------------------------------------------------------------- */
-
-@keyframes shimmer-pan {
-  from {
-    background-position: 0% 50%;
-  }
-  to {
-    background-position: -300% 50%;
-  }
-}
-
-.shimmer-border {
-  background-image: linear-gradient(
-    110deg,
-    rgba(5, 150, 105, 0.55) 0%,
-    rgba(5, 150, 105, 0.18) 25%,
-    rgba(52, 211, 153, 0.9) 50%,
-    rgba(5, 150, 105, 0.18) 75%,
-    rgba(5, 150, 105, 0.55) 100%
-  );
-  background-size: 300% 100%;
-  animation: shimmer-pan 8s linear infinite;
-}
-
-/* ---------------------------------------------------------------------------
  * Reduced motion. Purely cosmetic movement is removed outright; the animations
  * that communicate state (arrival, success, failure, change) collapse to the
  * finished frame so nothing is lost, only the travel.
  * ------------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
-  .logo-shimmer,
-  .shimmer-border {
-    animation: none;
-    background-position: 0% 50%;
-  }
-
   .animate-message-in,
-  .animate-typing-dot,
+  .animate-typing-square,
   .animate-button-spin,
   .animate-slide-in,
   .animate-sheet-up,
@@ -507,21 +495,21 @@ body {
   }
 
   .pressable,
-  .tab-pill,
+  .tab-underline,
   .grow-bar,
   .grow-bar-fast,
-  .btn-3d,
+  .btn-hard,
   .field {
     transition: none;
   }
 
-  .pressable:hover:not(:disabled),
   .pressable:active:not(:disabled) {
     transform: none;
   }
 
-  /* The press still sinks — that is feedback, not decoration — but instantly. */
-  .btn-3d:active:not(:disabled) {
+  /* The press still collapses the shadow — that is feedback, not decoration —
+   * but instantly. */
+  .btn-hard:active:not(:disabled) {
     transition: none;
   }
 }

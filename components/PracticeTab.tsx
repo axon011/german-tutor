@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TYPE_LABELS, type ErrorRecord } from "@/lib/error-log";
 import { CheckMark } from "./CheckMark";
+import { Kicker } from "./Kicker";
 import { LogoMark } from "./LogoMark";
 import { TypeChip } from "./MessageBubble";
 import { useCountUp } from "./useCountUp";
@@ -94,10 +95,10 @@ export function PracticeTab({ active }: { active: boolean }) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
         <LogoMark className="h-14 w-14 text-lg" />
-        <h2 className="text-lg font-bold tracking-tight">
+        <h2 className="font-display text-lg font-bold tracking-tight">
           Nothing to practice yet
         </h2>
-        <p className="max-w-sm text-sm leading-relaxed text-stone-600 dark:text-zinc-400">
+        <p className="text-muted max-w-sm text-sm leading-relaxed">
           Have a conversation first — your mistakes will show up here to
           practice.
         </p>
@@ -124,27 +125,26 @@ export function PracticeTab({ active }: { active: boolean }) {
         {/* The header and meter live OUTSIDE the keyed wrapper: they have to
             persist across exercises for the bar to animate rather than mount
             already-filled. */}
-        <p className="text-xs font-semibold text-stone-500 dark:text-zinc-400">
-          Exercise {index + 1} of {queue.length} · {score} correct
-        </p>
-        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-zinc-800">
+        <Kicker
+          index="03"
+          label={`Exercise ${index + 1} of ${queue.length} · ${score} correct`}
+        />
+        <div className="bg-ink/10 mt-3 h-2 w-full overflow-hidden">
           <div
-            className="grow-bar-fast h-full rounded-full bg-emerald-500"
+            className="grow-bar-fast bg-gold h-full"
             style={{ width: `${(index / queue.length) * 100}%` }}
           />
         </div>
 
         <div key={`${round}-${index}`} className="animate-slide-in">
-          <div className="mt-5 rounded-2xl border-2 border-stone-200 bg-white px-4 py-4 dark:border-zinc-700 dark:bg-zinc-800/60">
+          <div className="border-line bg-surface mt-5 rounded-sm border-2 px-4 py-4">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-stone-500 dark:text-zinc-400">
-                Your sentence
-              </span>
+              <span className="kicker text-muted">Your sentence</span>
               <TypeChip type={drill.type} />
             </div>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+            <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap">
               {before}
-              <span className="underline decoration-red-400 decoration-wavy decoration-2 underline-offset-4">
+              <span className="decoration-danger underline decoration-wavy decoration-2 underline-offset-4">
                 {drill.span}
               </span>
               {after}
@@ -153,7 +153,7 @@ export function PracticeTab({ active }: { active: boolean }) {
 
           <label
             htmlFor="drill-input"
-            className="mt-5 block text-sm font-bold"
+            className="font-display mt-5 block text-sm font-bold"
           >
             Rewrite the sentence correctly:
           </label>
@@ -174,16 +174,14 @@ export function PracticeTab({ active }: { active: boolean }) {
               disabled={status === "correct"}
               maxLength={4000}
               className={`field flex-1 px-4 py-3 text-[15px] ${
-                shakeAt
-                  ? "border-red-400! ring-2 ring-red-300/60 dark:border-red-500! dark:ring-red-500/40"
-                  : ""
+                shakeAt ? "border-danger! ring-danger/40 ring-2" : ""
               }`}
               placeholder="The corrected sentence…"
             />
             <button
               type="submit"
               disabled={status !== "revealed" && !answer.trim()}
-              className="btn-3d btn-3d-primary focus-ring shrink-0 px-5 py-3 text-sm"
+              className="btn-hard btn-hard-primary focus-ring shrink-0 px-5 py-3 text-sm uppercase"
             >
               {status === "revealed" ? "Next" : "Check"}
             </button>
@@ -191,44 +189,35 @@ export function PracticeTab({ active }: { active: boolean }) {
 
           <div aria-live="polite" className="mt-4">
             {status === "correct" && (
-              <div className="flex items-start gap-2.5 rounded-2xl border-2 border-emerald-300 bg-emerald-50 px-3 py-2.5 text-sm dark:border-emerald-500/40 dark:bg-emerald-500/10">
+              <div className="border-line border-l-success bg-surface flex items-start gap-2.5 rounded-sm border-2 border-l-[3px] px-3 py-2.5 text-sm">
                 <CheckMark className="mt-0.5 h-5 w-5" />
                 <div>
-                  <p className="font-bold text-emerald-800 dark:text-emerald-200">
+                  <p className="font-display text-success font-bold">
                     Correct!
                   </p>
-                  <p className="mt-1 text-emerald-900 dark:text-emerald-100">
-                    {drill.expected}
-                  </p>
+                  <p className="text-ink mt-1">{drill.expected}</p>
                 </div>
               </div>
             )}
             {status === "wrong" && (
-              <p className="rounded-2xl border-2 border-red-300 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-800 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200">
+              <p className="border-line border-l-danger bg-surface text-danger rounded-sm border-2 border-l-[3px] px-3 py-2.5 text-sm font-medium">
                 Not quite — look at the highlighted error.
               </p>
             )}
             {status === "revealed" && (
-              <div className="rounded-2xl border-2 border-stone-200 bg-stone-50 px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-800">
-                <p className="text-xs font-bold uppercase tracking-wide text-stone-500 dark:text-zinc-400">
-                  Solution
-                </p>
+              <div className="border-line border-l-ink bg-surface rounded-sm border-2 border-l-[3px] px-3 py-2.5 text-sm">
+                <p className="kicker text-muted">Solution</p>
                 <p className="mt-1 leading-relaxed">{drill.expected}</p>
                 <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                  <span className="text-red-700 line-through dark:text-red-300">
-                    {drill.span}
-                  </span>
-                  <span
-                    aria-hidden="true"
-                    className="text-stone-400 dark:text-zinc-500"
-                  >
+                  <span className="text-danger line-through">{drill.span}</span>
+                  <span aria-hidden="true" className="text-muted">
                     →
                   </span>
-                  <span className="font-semibold text-green-700 dark:text-green-300">
+                  <span className="text-success font-semibold">
                     {drill.correction}
                   </span>
                 </p>
-                <p className="mt-1.5 text-xs leading-relaxed text-stone-600 dark:text-zinc-400">
+                <p className="text-muted mt-1.5 text-xs leading-relaxed">
                   {drill.explanation || TYPE_LABELS[drill.type].tip}
                 </p>
               </div>
@@ -266,9 +255,14 @@ function Summary({
       ) : (
         <LogoMark className="h-14 w-14 text-lg" />
       )}
-      <h2 className="text-lg font-bold tracking-tight">Session complete</h2>
-      <p className="text-sm leading-relaxed text-stone-600 dark:text-zinc-300">
-        <span className="tabular-nums">{shown}</span> of {total} correct.{" "}
+      <h2 className="font-display text-lg font-bold tracking-tight">
+        Session complete
+      </h2>
+      <p className="text-muted text-sm leading-relaxed">
+        <span className="font-display text-ink text-2xl font-bold tabular-nums">
+          {shown}
+        </span>{" "}
+        of {total} correct.{" "}
         {score === total
           ? "Perfect — all of it stuck!"
           : "Repetition helps: give it another go."}
@@ -276,7 +270,7 @@ function Summary({
       <button
         type="button"
         onClick={onRestart}
-        className="btn-3d btn-3d-primary focus-ring px-5 py-2.5 text-sm"
+        className="btn-hard btn-hard-primary focus-ring px-5 py-2.5 text-sm uppercase"
       >
         Practice again
       </button>

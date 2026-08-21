@@ -1,9 +1,9 @@
 /**
- * A tick that draws itself inside a disc.
+ * A tick that draws itself inside a square.
  *
- * `success` (emerald) is the correct-answer signal; `gold` is the brand
+ * `success` (green) is the correct-answer signal; `gold` is the brand
  * celebration used when a lesson or a rule is finished. Both clear AA as
- * graphical objects.
+ * graphical objects, and gold always carries ink.
  */
 export function CheckMark({
   className = "h-6 w-6",
@@ -12,15 +12,15 @@ export function CheckMark({
   className?: string;
   tone?: "success" | "gold";
 }) {
-  const disc =
+  const block =
     tone === "gold"
-      ? "bg-amber-400 text-amber-950"
-      : "bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950";
+      ? "bg-gold text-gold-ink"
+      : "bg-success text-on-success";
 
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full ${disc} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-sm ${block} ${className}`}
     >
       <svg
         viewBox="0 0 24 24"
