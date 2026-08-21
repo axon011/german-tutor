@@ -20,9 +20,9 @@ function index2(n: number): string {
 }
 
 /**
- * The guided path: four level sections, eight lessons each. Every row launches
- * a focused conversation in the Conversation tab — the Learn tab itself never
- * talks to the model.
+ * The guided path: four level sections, eight lessons each, laid out as a grid
+ * of catalogue plates. Every tile launches a focused conversation in the
+ * Conversation tab — the Learn tab itself never talks to the model.
  */
 export function LearnTab({
   active,
@@ -105,9 +105,11 @@ export function LearnTab({
               />
             </div>
 
-            <ol className="mt-3 space-y-2">
+            {/* mt-4 rather than mt-3: the "Start here" chip hangs above its
+                tile, and needs the extra clearance under the progress bar. */}
+            <ol className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {lessons.map((lesson, i) => (
-                <LessonRow
+                <LessonTile
                   key={lesson.id}
                   lesson={lesson}
                   number={i + 1}
@@ -126,7 +128,12 @@ export function LearnTab({
   );
 }
 
-function LessonRow({
+/**
+ * One lesson as a catalogue plate: the numeral is the hero, the title and the
+ * one-line description sit under it, and a micro-label at the foot says what a
+ * press will do. The whole tile is the button.
+ */
+function LessonTile({
   lesson,
   number,
   progress,
@@ -146,60 +153,64 @@ function LessonRow({
   const entry = progress[lesson.id];
   const done = isCompleted(entry);
   const started = Boolean(entry) && !done;
-  const action = done ? "Review" : started ? "Continue" : "Start";
+  const status = done ? "Done" : started ? "Continue" : "Start";
 
   return (
-    <li>
-      {/* The whole row is the button — the pill on the right is a visual
-          affordance inside it, not a second click target. */}
+    <li
+      className="animate-message-in"
+      style={{ animationDelay: `${Math.min(delayIndex, 12) * 25}ms` }}
+    >
+      {/* `btn-hard` carries the hard-offset press. It also sets the display
+          font on everything inside, which is what the numeral, title and
+          micro-label want — only the description opts back out. */}
       <button
         type="button"
         onClick={() => onStart(lesson)}
         aria-current={isActive ? "true" : undefined}
-        className={`animate-message-in pressable focus-ring bg-surface flex w-full items-center gap-3 rounded-sm border-2 px-3 py-3 text-left ${
+        aria-label={`Lesson ${number}: ${lesson.title} — ${
+          done ? "done, review again" : started ? "continue" : "start"
+        }`}
+        className={`btn-hard focus-ring bg-surface relative flex h-full w-full flex-col rounded-sm border-2 p-3.5 text-left ${
           isBeacon ? "border-gold" : "border-line hover:border-ink/40"
         }`}
-        style={{ animationDelay: `${Math.min(delayIndex, 12) * 25}ms` }}
       >
-        {done ? (
-          <CheckMark className="h-8 w-8" tone="gold" />
-        ) : (
+        {isBeacon && (
+          <span className="kicker bg-gold text-gold-ink absolute -top-2 left-3 rounded-sm px-1.5 py-px text-[9px]">
+            Start here
+          </span>
+        )}
+
+        <span className="flex w-full items-start justify-between gap-2">
           <span
             aria-hidden="true"
-            className={`font-display flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 text-xs font-bold tabular-nums ${
-              started
-                ? "border-gold bg-gold text-gold-ink"
-                : "border-line text-muted"
+            className={`font-display text-3xl leading-none font-bold tabular-nums ${
+              done || started ? "text-gold" : "text-ink/25"
             }`}
           >
             {index2(number)}
           </span>
-        )}
-
-        <span className="min-w-0 flex-1">
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="font-display text-sm font-bold">
-              {lesson.title}
-            </span>
-            {isBeacon && (
-              <span className="kicker bg-gold text-gold-ink rounded-sm px-1.5 py-px text-[9px]">
-                Start here
-              </span>
-            )}
-          </span>
-          <span className="text-muted mt-0.5 block text-[11px] leading-relaxed">
-            {lesson.description}
-          </span>
+          {done && <CheckMark className="h-5 w-5" tone="gold" />}
         </span>
 
-        {/* Not a nested button — the whole row is the click target, so this is
-            styled as the action rather than being one. */}
+        <span className="font-display mt-2 line-clamp-2 block text-sm leading-snug font-semibold">
+          {lesson.title}
+        </span>
+        <span className="text-muted font-sans mt-1 line-clamp-2 block text-xs leading-relaxed font-normal tracking-normal">
+          {lesson.description}
+        </span>
+
+        {/* Not a nested button — the whole tile is the click target, so the
+            action reads as a caption rather than a second control. Gold is a
+            fill in this system, never small text, so "Continue" is carried by
+            full-strength ink against the muted grey of the other two. */}
         <span
-          className={`btn-hard shrink-0 px-3.5 py-1.5 text-xs uppercase ${
-            done ? "btn-hard-ghost" : "btn-hard-primary"
+          aria-hidden="true"
+          className={`kicker mt-auto flex items-center gap-1 pt-2.5 text-[10px] ${
+            started ? "text-ink" : "text-muted"
           }`}
         >
-          {action}
+          {status}
+          {!done && <span>→</span>}
         </span>
       </button>
     </li>
