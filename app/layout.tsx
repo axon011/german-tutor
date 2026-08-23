@@ -21,7 +21,7 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["500", "600", "700"],
 });
 
-const SITE_URL = "https://german-tutor-weld.vercel.app";
+const SITE_URL = "https://tutor.aravindpradee.me";
 
 const DESCRIPTION =
   "The AI German tutor that remembers every mistake you make and builds your practice around it — A1 to B2 lessons, live corrections, drills, and a full grammar reference. Free.";

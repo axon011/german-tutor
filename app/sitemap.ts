@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://german-tutor-weld.vercel.app";
+const SITE_URL = "https://tutor.aravindpradee.me";
 
 // One entry: the whole app is a single page whose tabs are client state, not
 // routes.
