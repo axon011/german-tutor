@@ -155,28 +155,35 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
   return (
     <AccountProvider enabled={authEnabled}>
       <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-        <header className="border-line shrink-0 border-b-2">
-          <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2.5">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <LogoMark className="h-9 w-9 shrink-0 text-sm" />
-              <div className="min-w-0">
-                <h1 className="font-display text-base leading-tight font-bold tracking-tight">
-                  DEUTSCH—TUTOR
-                </h1>
-                <p className="kicker text-muted mt-0.5 hidden truncate sm:block">
-                  A1 → B2 · Ein Gespräch nach dem anderen
-                </p>
+        {/* Positioned so the account menu drops from the bottom of this block,
+          below the import banner rather than over it. */}
+        <div className="relative shrink-0">
+          <header className="border-line border-b-2">
+            <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2.5 sm:pb-1">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <LogoMark className="h-9 w-9 shrink-0 text-sm" />
+                <div className="min-w-0">
+                  <h1 className="font-display text-base leading-tight font-bold tracking-tight whitespace-nowrap">
+                    DEUTSCH—TUTOR
+                  </h1>
+                  <p className="kicker text-muted mt-0.5 hidden truncate sm:block">
+                    A1 → B2 · Ein Gespräch nach dem anderen
+                  </p>
+                </div>
               </div>
+
+              {authEnabled && <AccountControl />}
             </div>
 
-            <div className="flex shrink-0 items-center gap-3">
-              {/* Wide viewports keep the sliding-underline row; phones get the
-              bottom bar below instead. */}
+            {/* Wide viewports get the sliding-underline row as its own strip
+              under the masthead (the five labels plus the brand lockup don't
+              fit one 672px row); phones get the bottom bar below instead. */}
+            <div className="mx-auto hidden w-full max-w-2xl px-4 sm:block">
               <div
                 ref={tablistRef}
                 role="tablist"
                 aria-label="Sections"
-                className="relative hidden items-end gap-1 pb-1.5 sm:flex"
+                className="relative -ml-2 flex items-end gap-1 pb-1.5"
               >
                 <span
                   aria-hidden="true"
@@ -211,13 +218,11 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
                   );
                 })}
               </div>
-
-              {authEnabled && <AccountControl />}
             </div>
-          </div>
-        </header>
+          </header>
 
-        {authEnabled && <ImportBanner />}
+          {authEnabled && <ImportBanner />}
+        </div>
 
         {visited.has("learn") && (
           <div

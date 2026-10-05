@@ -87,7 +87,7 @@ export function AccountControl() {
     );
   }
 
-  return <AccountMenu user={data.user} />;
+  return <AccountMenu key={data.user.id} user={data.user} />;
 }
 
 function AccountMenu({
@@ -115,8 +115,12 @@ function AccountMenu({
     };
   }, [open]);
 
+  // Deliberately not `relative`: the panel anchors to the app shell's top
+  // chrome (header + import banner), so it opens below the banner and can never
+  // cover the banner's buttons. `right` re-derives the header row's max-w-2xl /
+  // px-4 edge so the panel still lines up under the avatar.
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <div ref={rootRef} className="shrink-0">
       <button
         type="button"
         aria-haspopup="menu"
@@ -141,7 +145,7 @@ function AccountMenu({
       {open && (
         <div
           role="menu"
-          className="border-ink bg-surface shadow-hard absolute top-full right-0 z-30 mt-2 w-52 rounded-sm border-2"
+          className="border-ink bg-surface shadow-hard absolute top-full right-[max(1rem,calc((100%_-_42rem)/2_+_1rem))] z-30 mt-2 w-52 rounded-sm border-2"
         >
           <div className="border-line border-b px-3 py-2.5">
             <p className="kicker text-muted text-[9px]">Signed in</p>

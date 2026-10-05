@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { isCorrect } from "@/lib/drill-check";
 import { TYPE_LABELS, type ErrorRecord } from "@/lib/error-log";
 import type { SrsQuality } from "@/lib/srs";
 import { getStore, type SrsCard } from "@/lib/store";
@@ -468,31 +469,4 @@ function splitAtSpan(message: string, span: string): [string, string] {
   const at = message.indexOf(span);
   if (at === -1) return [message, ""];
   return [message.slice(0, at), message.slice(at + span.length)];
-}
-
-function normalize(text: string): string {
-  return text
-    .trim()
-    .replace(/\s+/g, " ")
-    .replace(/[.!?…,;:]+$/u, "")
-    .trim()
-    .toLowerCase();
-}
-
-/**
- * Accept the exact corrected sentence, or — partial credit for rephrasing —
- * any answer that contains the correction and no longer contains the wrong
- * span. Casing, spacing and final punctuation are never what we are drilling.
- */
-export function isCorrect(
-  answer: string,
-  drill: Pick<Drill, "expected" | "span" | "correction">,
-): boolean {
-  const given = normalize(answer);
-  if (!given) return false;
-  if (given === normalize(drill.expected)) return true;
-  const correction = normalize(drill.correction);
-  const wrong = normalize(drill.span);
-  if (!correction) return false;
-  return given.includes(correction) && (!wrong || !given.includes(wrong));
 }
