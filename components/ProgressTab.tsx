@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   computeFocus,
   countByType,
@@ -47,56 +47,91 @@ export function ProgressTab({ active }: { active: boolean }) {
     return () => clearTimeout(t);
   }, [active]);
 
+  // Only once the log has actually been read: before that the ledger renders
+  // with zeros, so the bars are mounted at width 0 and still get to grow.
+  if (readAt && records.length === 0) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
+        <LogoMark className="h-14 w-14 text-lg" />
+        <Kicker
+          index="04"
+          label="Progress"
+          className="flex flex-col items-center"
+        />
+        <h2 className="font-display text-lg font-bold tracking-tight">
+          Nothing measured yet
+        </h2>
+        <p className="text-muted max-w-sm text-sm leading-relaxed">
+          Have a conversation first — every mistake the tutor catches is logged
+          here, and your focus for the day is built from them.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 space-y-6 overflow-y-auto px-4 py-6">
+    <div className="flex-1 space-y-7 overflow-y-auto px-4 py-6">
       <Kicker index="04" label="Progress" />
       <FocusCard focus={focus} />
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <CountTile
           label="Total mistakes"
           value={records.length}
           active={active}
         />
         <CountTile label="This week" value={thisWeek} active={active} />
-        <Tile
-          label="Most common type"
-          value={records.length ? TYPE_LABELS[top].label : "—"}
-        />
+        <Tile label="Most common type">
+          {/* A word, not a numeral: set smaller so "Vocabulary" still fits a
+              third of a 375px screen, but in the same face as the counts. */}
+          <span className="font-display block text-sm leading-tight font-bold [overflow-wrap:anywhere] sm:text-lg">
+            {records.length ? TYPE_LABELS[top].label : "—"}
+          </span>
+        </Tile>
       </div>
 
       {activity.length > 0 && (
         <section>
           <Kicker label="Mistake activity" />
-          <p className="text-muted mt-2 text-[11px]">
+          <p className="text-muted mt-2 text-xs">
             Mistakes logged on each of the last {ACTIVITY_DAYS} days.
           </p>
-          <div className="mt-3 flex items-center gap-1.5">
-            {activity.map((day, i) => (
-              <span
-                key={day.start}
-                title={`${day.label}: ${day.count} ${
-                  day.count === 1 ? "mistake" : "mistakes"
-                }`}
-                className={`animate-cell-in h-6 flex-1 ${
-                  INTENSITY[intensityStep(day.count)]
-                }`}
-                style={{ animationDelay: `${i * 30}ms` }}
-              />
-            ))}
+          {/* Capped so the cells stay small squares on a wide panel. */}
+          <div className="mt-3 max-w-md">
+            <div className="flex items-center gap-1.5">
+              {activity.map((day, i) => (
+                <span
+                  key={day.start}
+                  title={`${day.label}: ${day.count} ${
+                    day.count === 1 ? "mistake" : "mistakes"
+                  }`}
+                  className={`animate-cell-in aspect-square flex-1 rounded-sm ${
+                    INTENSITY[intensityStep(day.count)]
+                  }`}
+                  style={{ animationDelay: `${i * 30}ms` }}
+                />
+              ))}
+            </div>
+            <div
+              aria-hidden="true"
+              className="kicker text-muted mt-1.5 flex justify-between text-[9px]"
+            >
+              <span>{activity[0].label}</span>
+              <span>Today</span>
+            </div>
           </div>
         </section>
       )}
 
       <section>
         <Kicker label="Mistakes by type" />
-        <div className="mt-3 space-y-2.5">
+        <div className="mt-4 space-y-3">
           {ERROR_TYPES.map((type, i) => (
             <div key={type} className="flex items-center gap-3">
-              <span className="text-muted w-28 shrink-0 text-xs font-medium">
+              <span className="kicker text-muted w-24 shrink-0 text-[10px]">
                 {TYPE_LABELS[type].label}
               </span>
-              <div className="bg-ink/10 h-2.5 flex-1 overflow-hidden">
+              <div className="bg-ink/10 h-3 flex-1 overflow-hidden">
                 <div
                   className="grow-bar bg-gold h-full"
                   style={{
@@ -105,7 +140,7 @@ export function ProgressTab({ active }: { active: boolean }) {
                   }}
                 />
               </div>
-              <span className="font-display text-muted w-6 shrink-0 text-right text-xs font-semibold tabular-nums">
+              <span className="font-display text-ink w-7 shrink-0 text-right text-sm font-bold tabular-nums">
                 {counts[type]}
               </span>
             </div>
@@ -118,13 +153,11 @@ export function ProgressTab({ active }: { active: boolean }) {
         {recent.length === 0 ? (
           <p className="text-muted mt-3 text-sm">No mistakes recorded yet.</p>
         ) : (
-          <div className="mt-3 space-y-2">
+          // A ledger, not a stack of cards: one ruled line per entry.
+          <div className="mt-2">
             {recent.map((r, i) => (
-              <div
-                key={`${r.ts}-${i}`}
-                className="border-line border-l-danger bg-surface rounded-sm border-2 border-l-[3px] px-3 py-2.5"
-              >
-                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+              <div key={`${r.ts}-${i}`} className="border-line border-b py-3">
+                <div className="flex flex-wrap items-center gap-1.5 text-sm">
                   <span className="text-danger line-through">{r.span}</span>
                   <span aria-hidden="true" className="text-muted">
                     →
@@ -132,7 +165,9 @@ export function ProgressTab({ active }: { active: boolean }) {
                   <span className="text-success font-semibold">
                     {r.correction}
                   </span>
-                  <TypeChip type={r.type} />
+                  <span className="ml-auto">
+                    <TypeChip type={r.type} />
+                  </span>
                 </div>
                 <p className="text-muted mt-1 text-xs leading-relaxed">
                   {r.explanation}
@@ -148,39 +183,38 @@ export function ProgressTab({ active }: { active: boolean }) {
 
 function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
   return (
-    // The card of the day: a surface panel behind a gold rule, which is the
-    // same "this is the active thing" signal the tab bar and the lesson chip
-    // use.
-    <section className="border-line border-l-gold bg-surface rounded-sm border-2 border-l-[3px] px-4 py-4">
-      <div className="flex items-center gap-2.5">
-        <LogoMark className="h-9 w-9 text-sm" />
-        <div>
-          <p className="kicker text-muted">Practice today</p>
-          <h2 className="font-display mt-0.5 text-sm font-bold">
-            {focus
-              ? `Your focus today: ${TYPE_LABELS[focus.type].label}`
-              : "Your focus is coming soon"}
-          </h2>
-        </div>
-      </div>
+    // The hero plate: a surface panel behind a gold rule, the same "this is the
+    // active thing" signal the tab bar and the lesson bar use.
+    <section className="border-ink/15 border-l-gold bg-surface rounded-sm border-2 border-l-[3px] px-5 py-5">
+      <p className="kicker text-muted">Practice today</p>
 
       {focus ? (
         <>
-          <p className="text-ink mt-3 text-sm">
-            <strong className="font-display text-xl font-bold">
-              {Math.round(focus.share * 100)}%
-            </strong>{" "}
-            of your recent errors ({focus.count} in total).
+          <div className="mt-2.5 flex items-end justify-between gap-4">
+            <h2 className="font-display min-w-0 text-3xl leading-none font-bold tracking-tight sm:text-4xl">
+              {TYPE_LABELS[focus.type].label}
+            </h2>
+            <p className="shrink-0 text-right">
+              <span className="font-display block text-4xl leading-none font-bold tabular-nums">
+                {Math.round(focus.share * 100)}%
+              </span>
+              <span className="kicker text-muted mt-1 block text-[9px]">
+                Of recent errors
+              </span>
+            </p>
+          </div>
+          <p className="text-muted mt-2 text-xs">
+            {focus.count} logged in total.
           </p>
-          <p className="text-muted mt-1.5 text-sm leading-relaxed">
+          <p className="text-ink mt-4 text-sm leading-relaxed">
             {TYPE_LABELS[focus.type].tip}
           </p>
           {focus.examples.length > 0 && (
-            <ul className="mt-3 space-y-1">
+            <ul className="border-line mt-4 space-y-1.5 border-t pt-3">
               {focus.examples.map((e, i) => (
                 <li
                   key={i}
-                  className="flex flex-wrap items-center gap-1.5 text-xs"
+                  className="flex flex-wrap items-center gap-1.5 text-sm"
                 >
                   <span className="text-danger line-through">{e.span}</span>
                   <span aria-hidden="true" className="text-muted">
@@ -195,22 +229,27 @@ function FocusCard({ focus }: { focus: ReturnType<typeof computeFocus> }) {
           )}
         </>
       ) : (
-        <p className="text-muted mt-3 text-sm leading-relaxed">
-          Not enough data yet — after a few conversations your personal focus
-          appears here.
-        </p>
+        <>
+          <h2 className="font-display text-muted mt-2.5 text-2xl leading-tight font-bold tracking-tight">
+            Your focus is coming soon
+          </h2>
+          <p className="text-muted mt-3 text-sm leading-relaxed">
+            Not enough data yet — after a few conversations your personal focus
+            appears here.
+          </p>
+        </>
       )}
     </section>
   );
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
+function Tile({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="pressable border-line bg-surface hover:border-ink/40 rounded-sm border-2 px-3 py-3 text-center">
-      <p className="font-display text-xl leading-tight font-bold tabular-nums">
-        {value}
-      </p>
-      <p className="kicker text-muted mt-1 text-[9px]">{label}</p>
+    <div className="pressable border-line bg-surface hover:border-ink/40 flex flex-col rounded-sm border-2 px-2 py-3.5 text-center sm:px-3">
+      <div className="flex min-h-9 flex-1 items-center justify-center">
+        {children}
+      </div>
+      <p className="kicker text-muted mt-1.5 text-[9px]">{label}</p>
     </div>
   );
 }
@@ -225,7 +264,13 @@ function CountTile({
   active: boolean;
 }) {
   const shown = useCountUp(value, active);
-  return <Tile label={label} value={String(shown)} />;
+  return (
+    <Tile label={label}>
+      <span className="font-display block text-3xl leading-none font-bold tabular-nums sm:text-4xl">
+        {shown}
+      </span>
+    </Tile>
+  );
 }
 
 /** An ink track, then three steps of gold — square cells, no rounding. */

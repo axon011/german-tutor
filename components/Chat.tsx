@@ -13,6 +13,7 @@ import {
   recordLessonTurn,
 } from "@/lib/lesson-progress";
 import { CheckMark } from "./CheckMark";
+import { Kicker } from "./Kicker";
 import { LEVEL_CHIP, LEVEL_CHIP_ON } from "./levelStyles";
 import { LogoMark } from "./LogoMark";
 import { MessageBubble, TypeChip } from "./MessageBubble";
@@ -256,6 +257,11 @@ export function Chat({
         {messages.length === 0 && (
           <div className="my-auto flex flex-col items-center gap-4 text-center">
             <LogoMark className="h-14 w-14 text-lg" />
+            <Kicker
+              index="02"
+              label="Chat"
+              className="flex flex-col items-center"
+            />
             <h2 className="font-display text-lg font-bold tracking-tight">
               Hello! Let&apos;s speak German.
             </h2>
@@ -268,12 +274,12 @@ export function Chat({
               <button
                 type="button"
                 onClick={startFirstLesson}
-                className="btn-hard btn-hard-primary focus-ring max-w-full px-5 py-2.5"
+                className="btn-hard btn-hard-primary focus-ring max-w-full px-5 py-3"
               >
                 {/* Two deliberate lines rather than one long one: a 30-character
                     lesson title wraps unpredictably at 375px when it is glued
                     to the verb. */}
-                <span className="block text-sm leading-snug">
+                <span className="block text-sm leading-snug uppercase">
                   Start Lesson 1
                 </span>
                 <span className="mt-0.5 block text-xs leading-snug font-medium text-balance opacity-90">
@@ -387,44 +393,42 @@ function FocusChip({
 }) {
   const grammar = focus.kind === "grammar";
   return (
+    // A ruled bar: the gold left rule marks the active focus, and turns green
+    // for the few seconds the completion is being celebrated.
     <div
-      className={`animate-message-in border-line text-ink flex items-center gap-2 border-t-2 border-l-[3px] px-4 py-2.5 text-xs ${
-        celebrating ? "border-l-gold bg-gold/20" : "border-l-gold bg-surface"
+      className={`animate-message-in border-line bg-surface text-ink flex items-center gap-3 border-t-2 border-l-[3px] px-4 py-2.5 ${
+        celebrating ? "border-l-success" : "border-l-gold"
       }`}
     >
-      {celebrating ? (
-        <CheckMark className="h-5 w-5" tone="gold" />
-      ) : (
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.8}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="h-4 w-4 shrink-0"
-          aria-hidden="true"
+      {celebrating && <CheckMark className="h-6 w-6" />}
+      <div className="min-w-0 flex-1">
+        <p
+          className={`kicker text-[10px] ${
+            celebrating ? "text-success" : "text-muted"
+          }`}
         >
-          <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H5.5A1.5 1.5 0 0 1 4 15.5z" />
-          <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h4.5a1.5 1.5 0 0 0 1.5-1.5z" />
-        </svg>
-      )}
-      <span className="font-display min-w-0 flex-1 truncate font-semibold">
-        {celebrating
-          ? grammar
-            ? "Rule practised!"
-            : "Lesson complete!"
-          : `${grammar ? "Rule" : "Lesson"}: ${focus.title}`}
-      </span>
-      <span className="font-display text-muted shrink-0 font-semibold tabular-nums">
-        {Math.min(turns, COMPLETE_TURNS)}/{COMPLETE_TURNS}
+          {celebrating
+            ? grammar
+              ? "Rule practised"
+              : "Lesson complete"
+            : grammar
+              ? "Rule"
+              : "Lesson"}
+        </p>
+        <p className="font-display mt-0.5 truncate text-sm leading-snug font-semibold">
+          {focus.title}
+        </p>
+      </div>
+      <span className="font-display shrink-0 text-base leading-none font-bold tabular-nums">
+        {Math.min(turns, COMPLETE_TURNS)}
+        <span className="text-ink/40">/{COMPLETE_TURNS}</span>
       </span>
       <button
         type="button"
         onClick={onEnd}
         aria-label={grammar ? "End rule practice" : "End lesson"}
         title={grammar ? "End rule practice" : "End lesson"}
-        className="pressable focus-ring text-muted hover:bg-ink hover:text-on-ink flex h-6 w-6 shrink-0 items-center justify-center rounded-sm"
+        className="pressable focus-ring border-line text-muted hover:border-ink hover:bg-ink hover:text-on-ink flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border-2 text-base leading-none"
       >
         ×
       </button>
