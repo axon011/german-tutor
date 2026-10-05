@@ -4,20 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
-import { appendErrorLog } from "@/lib/error-log";
+import { toErrorRecords } from "@/lib/error-log";
 import { lessonsForLevel, type Lesson } from "@/lib/curriculum";
 import { getFocusEntry, type FocusEntry } from "@/lib/focus";
-import {
-  COMPLETE_TURNS,
-  readLessonProgress,
-  recordLessonTurn,
-} from "@/lib/lesson-progress";
+import { COMPLETE_TURNS, type LessonProgress } from "@/lib/lesson-progress";
 import { CheckMark } from "./CheckMark";
 import { Kicker } from "./Kicker";
 import { LEVEL_CHIP, LEVEL_CHIP_ON } from "./levelStyles";
 import { LogoMark } from "./LogoMark";
 import { MessageBubble, TypeChip } from "./MessageBubble";
 import { useDialog } from "./useDialog";
+import { useStore } from "./useStore";
 
 const SUGGESTIONS = [
   "Ich möchte über mein Wochenende sprechen",
@@ -55,6 +52,8 @@ export function Chat({
   const [everCompleted, setEverCompleted] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  /** Guest browser or signed-in account — every progress read/write goes here. */
+  const store = useStore();
 
   // A curriculum lesson or a grammar rule — the chip renders both, and only
   // the label differs.
@@ -71,12 +70,21 @@ export function Chat({
   // Adopt the stored turn count when a lesson is armed, so "Continue" picks up
   // where the learner left off instead of restarting the counter at 0.
   useEffect(() => {
-    const progress = readLessonProgress();
+    let stale = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEverCompleted(Object.values(progress).some((e) => e.completedAt));
     setCelebrating(false);
-    setLessonTurns(activeLesson ? (progress[activeLesson]?.turns ?? 0) : 0);
-  }, [activeLesson]);
+    store.getLessonProgress().then(
+      (progress) => {
+        if (stale) return;
+        setEverCompleted(Object.values(progress).some((e) => e.completedAt));
+        setLessonTurns(activeLesson ? (progress[activeLesson]?.turns ?? 0) : 0);
+      },
+      () => {},
+    );
+    return () => {
+      stale = true;
+    };
+  }, [activeLesson, store]);
 
   useEffect(() => {
     if (!celebrating) return;
@@ -93,10 +101,13 @@ export function Chat({
   }
 
   /** Empty-state CTA: first lesson of the level the learner has not finished. */
-  function startFirstLesson() {
-    const progress = readLessonProgress();
+  async function startFirstLesson() {
+    const progress = await store
+      .getLessonProgress()
+      .catch((): LessonProgress => ({}));
     const lessons = lessonsForLevel(level);
-    const next = lessons.find((l) => !progress[l.id]?.completedAt) ?? lessons[0];
+    const next =
+      lessons.find((l) => !progress[l.id]?.completedAt) ?? lessons[0];
     onStartLesson?.(next);
   }
 
@@ -119,14 +130,17 @@ export function Chat({
     // Count the turn as soon as it is sent — lesson progress measures effort
     // spoken, not whether the tutor's reply arrived.
     if (activeLesson) {
-      const entry = recordLessonTurn(activeLesson);
-      if (entry) {
-        setLessonTurns(entry.turns);
-        if (entry.turns === COMPLETE_TURNS) {
-          setCelebrating(true);
-          setEverCompleted(true);
-        }
-      }
+      store.recordLessonTurn(activeLesson).then(
+        (entry) => {
+          if (!entry) return;
+          setLessonTurns(entry.turns);
+          if (entry.turns === COMPLETE_TURNS) {
+            setCelebrating(true);
+            setEverCompleted(true);
+          }
+        },
+        () => {},
+      );
     }
 
     const history = [...messages, { role: "user" as const, content }];
@@ -146,7 +160,9 @@ export function Chat({
       .then(({ errors }: { errors?: CorrectionError[] }) => {
         if (!errors?.length) return;
         setCorrections((prev) => ({ ...prev, [userIndex]: errors }));
-        appendErrorLog(errors, content, level);
+        store
+          .appendErrors(toErrorRecords(errors, content, level))
+          .catch(() => {});
       })
       .catch(() => {});
 

@@ -1,11 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  onErrorLogChange,
-  readErrorLog,
-  type ErrorRecord,
-} from "@/lib/error-log";
+import type { ErrorRecord } from "@/lib/error-log";
+import { useStore } from "./useStore";
 
 interface LogSnapshot {
   records: ErrorRecord[];
@@ -17,20 +14,34 @@ interface LogSnapshot {
 const EMPTY: LogSnapshot = { records: [], readAt: 0 };
 
 /**
- * The error log as React state. Re-reads localStorage when the tab becomes
- * active and whenever another part of the app appends to the log, so an
- * open Practice or Progress view never shows stale data.
+ * The error log as React state. Re-reads the current store when the tab
+ * becomes active, whenever another part of the app appends to the log, and
+ * when the store itself is swapped (sign-in / sign-out), so an open Practice
+ * or Progress view never shows stale data. A failed read keeps the last
+ * snapshot rather than flashing an empty state.
  */
 export function useErrorRecords(active: boolean): LogSnapshot {
   const [snapshot, setSnapshot] = useState<LogSnapshot>(EMPTY);
+  const store = useStore();
 
   useEffect(() => {
     if (!active) return;
-    const read = () => setSnapshot({ records: readErrorLog(), readAt: Date.now() });
-    // Sync from an external store (localStorage); SSR forbids an initializer.
+    let stale = false;
+    const read = () => {
+      store.listErrors().then(
+        (records) => {
+          if (!stale) setSnapshot({ records, readAt: Date.now() });
+        },
+        () => {},
+      );
+    };
     read();
-    return onErrorLogChange(read);
-  }, [active]);
+    const off = store.subscribe(read);
+    return () => {
+      stale = true;
+      off();
+    };
+  }, [active, store]);
 
   return snapshot;
 }

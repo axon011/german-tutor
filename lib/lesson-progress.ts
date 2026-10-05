@@ -8,7 +8,8 @@
  */
 
 const STORAGE_KEY = "lesson-progress";
-const CHANGE_EVENT = "lesson-progress-changed";
+export const LESSON_PROGRESS_EVENT = "lesson-progress-changed";
+const CHANGE_EVENT = LESSON_PROGRESS_EVENT;
 
 /** User turns inside a lesson before it counts as complete. */
 export const COMPLETE_TURNS = 6;

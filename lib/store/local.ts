@@ -17,18 +17,15 @@ import {
   recordLessonTurn,
   startLesson,
 } from "../lesson-progress";
-import { isDue, newCardState, review, type SrsQuality } from "../srs";
+import { isDue, review, type SrsQuality } from "../srs";
+import { cardKey, deriveCardDrafts } from "../srs-cards";
 import type { LessonProgressMap, ProgressStore, SrsCard } from "./types";
 
 const SRS_KEY = "srs-cards";
-const SRS_EVENT = "srs-cards-changed";
+export const SRS_EVENT = "srs-cards-changed";
 
 function hasWindow(): boolean {
   return typeof window !== "undefined";
-}
-
-function cardKey(message: string, span: string): string {
-  return `${message}\u0000${span}`;
 }
 
 function newId(): string {
@@ -37,17 +34,6 @@ function newId(): string {
   } catch {
     return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
   }
-}
-
-/** A record can become a card only if it can be drilled: same rule as the
- *  Practice queue — the span must still occur and the correction must differ. */
-function isDrillable(r: ErrorRecord): boolean {
-  return (
-    Boolean(r.span) &&
-    Boolean(r.correction) &&
-    r.span !== r.correction &&
-    r.message.includes(r.span)
-  );
 }
 
 function isSrsCard(v: unknown): v is SrsCard {
@@ -66,7 +52,8 @@ function isSrsCard(v: unknown): v is SrsCard {
   );
 }
 
-function readCards(): SrsCard[] {
+/** This browser's SRS deck. Exported for the one-time import on sign-in. */
+export function readCards(): SrsCard[] {
   if (!hasWindow()) return [];
   try {
     const parsed: unknown = JSON.parse(
@@ -96,28 +83,10 @@ function writeCards(cards: SrsCard[], notify: boolean) {
 function syncCards(now: number): SrsCard[] {
   const cards = readCards();
   const known = new Set(cards.map((c) => cardKey(c.sourceMessage, c.span)));
-  const log = readErrorLog();
-  let added = false;
-  for (let i = log.length - 1; i >= 0; i--) {
-    const r = log[i];
-    if (!isDrillable(r)) continue;
-    const key = cardKey(r.message, r.span);
-    if (known.has(key)) continue;
-    known.add(key);
-    cards.push({
-      id: newId(),
-      sourceMessage: r.message,
-      span: r.span,
-      correction: r.correction,
-      explanation: r.explanation,
-      type: r.type,
-      level: r.level,
-      createdAt: now,
-      ...newCardState(now),
-    });
-    added = true;
-  }
-  if (added) writeCards(cards, false);
+  const drafts = deriveCardDrafts(readErrorLog(), known, now);
+  if (drafts.length === 0) return cards;
+  for (const d of drafts) cards.push({ id: newId(), ...d });
+  writeCards(cards, false);
   return cards;
 }
 
@@ -149,7 +118,11 @@ export class LocalStore implements ProgressStore {
       .sort((a, b) => a.dueAt - b.dueAt);
   }
 
-  async reviewCard(id: string, quality: SrsQuality, now: number): Promise<void> {
+  async reviewCard(
+    id: string,
+    quality: SrsQuality,
+    now: number,
+  ): Promise<void> {
     if (!hasWindow()) return;
     const cards = readCards();
     const i = cards.findIndex((c) => c.id === id);

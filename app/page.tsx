@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/AppShell";
+import { isAuthEnabled } from "@/lib/auth-enabled";
 
 export default function Home() {
   return (
@@ -9,7 +10,7 @@ export default function Home() {
     <main className="app-backdrop flex h-dvh flex-col overflow-hidden">
       <div aria-hidden="true" className="brand-stripe h-[6px] w-full shrink-0" />
       <div className="bg-background lg:border-ink/20 lg:shadow-hard-lg flex min-h-0 w-full flex-1 flex-col overflow-hidden lg:mx-auto lg:my-8 lg:max-w-2xl lg:rounded-sm lg:border-2">
-        <AppShell />
+        <AppShell authEnabled={isAuthEnabled()} />
       </div>
     </main>
   );

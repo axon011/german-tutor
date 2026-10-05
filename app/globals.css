@@ -300,6 +300,11 @@ body {
   transition: width 300ms ease-out;
 }
 
+/* The same growth for a column that fills upwards. */
+.grow-bar-v {
+  transition: height 600ms ease-out;
+}
+
 /* The sliding gold underline beneath the active desktop tab. */
 .tab-underline {
   transition:
@@ -498,6 +503,7 @@ body {
   .tab-underline,
   .grow-bar,
   .grow-bar-fast,
+  .grow-bar-v,
   .btn-hard,
   .field {
     transition: none;

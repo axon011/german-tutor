@@ -1,19 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getStore, type SrsCard } from "@/lib/store";
+import type { SrsCard } from "@/lib/store";
+import { useStore } from "./useStore";
 
 /**
  * SRS cards due right now, as React state. Mirrors useErrorRecords: re-lists
- * when the tab becomes active and on every store change (a new mistake
- * creates a card, a review moves one out of the due set).
+ * when the tab becomes active, on every store change (a new mistake creates a
+ * card, a review moves one out of the due set) and on a store swap.
  */
 export function useDueCards(active: boolean): SrsCard[] {
   const [cards, setCards] = useState<SrsCard[]>([]);
+  const store = useStore();
 
   useEffect(() => {
     if (!active) return;
-    const store = getStore();
     let stale = false;
     const read = () => {
       store.listDueCards(Date.now()).then(
@@ -29,7 +30,7 @@ export function useDueCards(active: boolean): SrsCard[] {
       stale = true;
       off();
     };
-  }, [active]);
+  }, [active, store]);
 
   return cards;
 }

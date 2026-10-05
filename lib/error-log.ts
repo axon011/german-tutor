@@ -13,7 +13,8 @@ import type { CorrectionError } from "./corrector";
 import type { CefrLevel } from "./tutor-prompt";
 
 const STORAGE_KEY = "error-log";
-const CHANGE_EVENT = "error-log-changed";
+export const ERROR_LOG_EVENT = "error-log-changed";
+const CHANGE_EVENT = ERROR_LOG_EVENT;
 const MAX_RECORDS = 500;
 
 /** One error, one row. Flat and boring on purpose — this maps to a DB row. */
@@ -100,18 +101,25 @@ export function appendErrorLog(
   message: string,
   level: CefrLevel,
 ) {
-  const ts = Date.now();
-  appendErrorRecords(
-    errors.map((e) => ({
-      ts,
-      level,
-      message,
-      span: e.span,
-      type: e.type,
-      correction: e.correction,
-      explanation: e.explanation,
-    })),
-  );
+  appendErrorRecords(toErrorRecords(errors, message, level));
+}
+
+/** One row per Corrector error, all stamped with the same time. */
+export function toErrorRecords(
+  errors: CorrectionError[],
+  message: string,
+  level: CefrLevel,
+  ts: number = Date.now(),
+): ErrorRecord[] {
+  return errors.map((e) => ({
+    ts,
+    level,
+    message,
+    span: e.span,
+    type: e.type,
+    correction: e.correction,
+    explanation: e.explanation,
+  }));
 }
 
 /** Append ready-made rows (the ProgressStore entry point). */

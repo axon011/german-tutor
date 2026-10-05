@@ -8,6 +8,7 @@ import {
   TYPE_LABELS,
   type ErrorRecord,
 } from "@/lib/error-log";
+import { mistakesPerWeek } from "@/lib/weekly";
 import { Kicker } from "./Kicker";
 import { LogoMark } from "./LogoMark";
 import { TypeChip } from "./MessageBubble";
@@ -18,8 +19,9 @@ const DAY_MS = 86_400_000;
 const WEEK_MS = 7 * DAY_MS;
 const RECENT_COUNT = 8;
 const ACTIVITY_DAYS = 14;
+const TREND_WEEKS = 8;
 
-/** Dashboard over the local error log: today's focus, stats, trends, history. */
+/** Dashboard over the error log: today's focus, stats, trends, history. */
 export function ProgressTab({ active }: { active: boolean }) {
   const { records, readAt } = useErrorRecords(active);
   const focus = useMemo(() => computeFocus(records, readAt), [records, readAt]);
@@ -33,6 +35,11 @@ export function ProgressTab({ active }: { active: boolean }) {
     () => buildActivity(records, readAt),
     [records, readAt],
   );
+  const weeks = useMemo(
+    () => (readAt ? mistakesPerWeek(records, readAt, TREND_WEEKS) : []),
+    [records, readAt],
+  );
+  const weekMax = Math.max(1, ...weeks.map((w) => w.count));
 
   // Bars start at width 0 and grow once the tab is on screen, so the shape of
   // the data reads as something that was just measured.
@@ -120,6 +127,57 @@ export function ProgressTab({ active }: { active: boolean }) {
               <span>Today</span>
             </div>
           </div>
+        </section>
+      )}
+
+      {weeks.length > 0 && (
+        <section>
+          <Kicker label="Mistakes per week" />
+          <p className="text-muted mt-2 text-xs">
+            Mistakes logged in each of the last {TREND_WEEKS} weeks, Monday to
+            Sunday.
+          </p>
+          <ol className="mt-4 flex max-w-md items-end gap-1.5 sm:gap-2">
+            {weeks.map((w, i) => (
+              <li
+                key={w.start}
+                className="flex min-w-0 flex-1 flex-col items-center gap-1.5"
+              >
+                <span className="sr-only">
+                  Week {w.label.slice(1)}: {w.count}{" "}
+                  {w.count === 1 ? "mistake" : "mistakes"}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`font-display text-xs font-bold tabular-nums ${
+                    w.count ? "text-ink" : "text-muted"
+                  }`}
+                >
+                  {w.count}
+                </span>
+                <div
+                  aria-hidden="true"
+                  className="bg-ink/10 relative h-20 w-full"
+                >
+                  <div
+                    className="grow-bar-v bg-gold absolute inset-x-0 bottom-0"
+                    style={{
+                      height: grown ? `${(w.count / weekMax) * 100}%` : "0%",
+                      transitionDelay: `${i * 40}ms`,
+                    }}
+                  />
+                </div>
+                <span
+                  aria-hidden="true"
+                  className={`kicker text-[9px] ${
+                    i === weeks.length - 1 ? "text-ink" : "text-muted"
+                  }`}
+                >
+                  {w.label}
+                </span>
+              </li>
+            ))}
+          </ol>
         </section>
       )}
 
@@ -274,12 +332,7 @@ function CountTile({
 }
 
 /** An ink track, then three steps of gold — square cells, no rounding. */
-const INTENSITY = [
-  "bg-ink/10",
-  "bg-gold/30",
-  "bg-gold/60",
-  "bg-gold",
-];
+const INTENSITY = ["bg-ink/10", "bg-gold/30", "bg-gold/60", "bg-gold"];
 
 function intensityStep(count: number): number {
   if (count === 0) return 0;

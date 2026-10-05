@@ -17,7 +17,7 @@ import type { CefrLevel } from "./tutor-prompt";
  * product.
  */
 
-const ERROR_TYPES = [
+export const ERROR_TYPES = [
   "grammar",
   "vocabulary",
   "spelling",

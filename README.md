@@ -47,6 +47,18 @@ Design decisions worth reading the code for:
 - **The recommender is a formula, not an LLM**: `weight = e^(-age_days / 7)` summed per error type. Explainable, free, and testable.
 - **Lesson prompts never cross the wire**: the client sends a lesson *id*; the German steering instruction is resolved server-side.
 
+## Accounts & sync
+
+Login is optional. Guests keep everything in the browser (localStorage), exactly as before.
+
+- **GitHub login** via Auth.js v5. Sessions are JWT cookies, so a signed-in request costs no database round-trip. Users and linked accounts are stored through the Drizzle adapter.
+- **Postgres on Neon, through Drizzle.** Errors, lesson progress and review cards live in `error_records`, `lesson_progress` and `srs_cards` (`lib/db/schema.ts`). Every `/api/me/*` route checks the session, validates its body with Zod (with size caps) and scopes each query to the session's user.
+- **One store interface, two backends.** `lib/store` defines `ProgressStore`. `LocalStore` wraps localStorage; `RemoteStore` calls `/api/me/*`. The app picks one when the session resolves, and every view reads through it, so no component knows which one it has.
+- **SM-2 review.** Each distinct drillable mistake becomes a spaced-repetition card (`lib/srs.ts`, `lib/srs-cards.ts`). The same derivation rule runs in the browser and on the server.
+- **First sign-in import.** If the browser already has guest history, a banner offers to copy it into the account once. The import is idempotent, so running it twice never duplicates rows.
+
+If `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` or `DATABASE_URL` is missing, the sign-in button is not rendered and the app runs guest-only.
+
 ## Run it locally
 
 ```bash
@@ -59,4 +71,4 @@ npm run test:llm       # two-turn streaming smoke test with TTFT measurement
 
 ## Roadmap
 
-Persistence (Postgres/Drizzle + NextAuth), per-correction error records, SM-2 spaced repetition, Langfuse tracing per agent — see `CLAUDE.md` for the slice plan.
+Langfuse tracing per agent; see `CLAUDE.md` for the slice plan.

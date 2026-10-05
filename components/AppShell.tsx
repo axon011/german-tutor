@@ -1,7 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { startLesson } from "@/lib/lesson-progress";
+import { getStore } from "@/lib/store";
+import { AccountControl, AccountProvider, ImportBanner } from "./Account";
 import { Chat } from "./Chat";
 import { GrammarTab } from "./GrammarTab";
 import { LearnTab } from "./LearnTab";
@@ -96,8 +97,11 @@ const PANEL = "relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col";
  *
  * The active focus — a curriculum lesson or a grammar rule — lives here rather
  * than in Chat, because Learn and Grammar start it and Chat consumes it.
+ *
+ * `authEnabled` is decided on the server from the environment; when false the
+ * account UI is never rendered and everything stays in the browser.
  */
-export function AppShell() {
+export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
   const [tab, setTab] = useState<Tab>("chat");
   const [visited, setVisited] = useState<Set<Tab>>(
     () => new Set<Tab>(["chat"]),
@@ -141,170 +145,180 @@ export function AppShell() {
    * Grammar tab reuses this untouched.
    */
   function beginFocus(id: string) {
-    startLesson(id);
+    getStore()
+      .startLesson(id)
+      .catch(() => {});
     setActiveLesson(id);
     select("chat");
   }
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
-      <header className="border-line shrink-0 border-b-2">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2.5">
-          <div className="flex items-center gap-2.5">
-            <LogoMark className="h-9 w-9 text-sm" />
-            <div>
-              <h1 className="font-display text-base leading-tight font-bold tracking-tight">
-                DEUTSCH—TUTOR
-              </h1>
-              <p className="kicker text-muted mt-0.5 hidden sm:block">
-                A1 → B2 · Ein Gespräch nach dem anderen
-              </p>
+    <AccountProvider enabled={authEnabled}>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+        <header className="border-line shrink-0 border-b-2">
+          <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <LogoMark className="h-9 w-9 shrink-0 text-sm" />
+              <div className="min-w-0">
+                <h1 className="font-display text-base leading-tight font-bold tracking-tight">
+                  DEUTSCH—TUTOR
+                </h1>
+                <p className="kicker text-muted mt-0.5 hidden truncate sm:block">
+                  A1 → B2 · Ein Gespräch nach dem anderen
+                </p>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-3">
+              {/* Wide viewports keep the sliding-underline row; phones get the
+              bottom bar below instead. */}
+              <div
+                ref={tablistRef}
+                role="tablist"
+                aria-label="Sections"
+                className="relative hidden items-end gap-1 pb-1.5 sm:flex"
+              >
+                <span
+                  aria-hidden="true"
+                  className="tab-underline bg-gold absolute bottom-0 left-0 h-[3px]"
+                  style={{
+                    width: pill?.width ?? 0,
+                    transform: `translateX(${pill?.left ?? 0}px)`,
+                    opacity: pill ? 1 : 0,
+                  }}
+                />
+                {TABS.map(({ id, label }) => {
+                  const active = id === tab;
+                  return (
+                    <button
+                      key={id}
+                      ref={(node) => {
+                        if (node) tabRefs.current.set(id, node);
+                        else tabRefs.current.delete(id);
+                      }}
+                      type="button"
+                      role="tab"
+                      id={`tab-${id}`}
+                      aria-selected={active}
+                      aria-controls={`panel-${id}`}
+                      onClick={() => select(id)}
+                      className={`pressable focus-ring font-display relative z-10 px-2 py-1 text-[11px] font-semibold tracking-[0.12em] whitespace-nowrap uppercase ${
+                        active ? "text-ink" : "text-muted hover:text-ink"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {authEnabled && <AccountControl />}
             </div>
           </div>
+        </header>
 
-          {/* Wide viewports keep the sliding-underline row; phones get the
-              bottom bar below instead. */}
+        {authEnabled && <ImportBanner />}
+
+        {visited.has("learn") && (
           <div
-            ref={tablistRef}
-            role="tablist"
-            aria-label="Sections"
-            className="relative hidden items-end gap-1 pb-1.5 sm:flex"
+            role="tabpanel"
+            id="panel-learn"
+            aria-labelledby="tab-learn"
+            className={tab === "learn" ? PANEL : "hidden"}
           >
-            <span
-              aria-hidden="true"
-              className="tab-underline bg-gold absolute bottom-0 left-0 h-[3px]"
-              style={{
-                width: pill?.width ?? 0,
-                transform: `translateX(${pill?.left ?? 0}px)`,
-                opacity: pill ? 1 : 0,
-              }}
+            <LearnTab
+              active={tab === "learn"}
+              activeLesson={activeLesson}
+              onStart={(lesson) => beginFocus(lesson.id)}
             />
+          </div>
+        )}
+
+        <div
+          role="tabpanel"
+          id="panel-chat"
+          aria-labelledby="tab-chat"
+          className={tab === "chat" ? PANEL : "hidden"}
+        >
+          <Chat
+            activeLesson={activeLesson}
+            onStartLesson={(lesson) => beginFocus(lesson.id)}
+            onEndLesson={() => setActiveLesson(null)}
+          />
+        </div>
+
+        {visited.has("practice") && (
+          <div
+            role="tabpanel"
+            id="panel-practice"
+            aria-labelledby="tab-practice"
+            className={tab === "practice" ? PANEL : "hidden"}
+          >
+            <PracticeTab active={tab === "practice"} />
+          </div>
+        )}
+
+        {visited.has("progress") && (
+          <div
+            role="tabpanel"
+            id="panel-progress"
+            aria-labelledby="tab-progress"
+            className={tab === "progress" ? PANEL : "hidden"}
+          >
+            <ProgressTab active={tab === "progress"} />
+          </div>
+        )}
+
+        {visited.has("grammar") && (
+          <div
+            role="tabpanel"
+            id="panel-grammar"
+            aria-labelledby="tab-grammar"
+            className={tab === "grammar" ? PANEL : "hidden"}
+          >
+            <GrammarTab
+              active={tab === "grammar"}
+              activeFocus={activeLesson}
+              onPractice={beginFocus}
+            />
+          </div>
+        )}
+
+        {/* Phone navigation. It is the last flex item of a full-height column
+          rather than `position: fixed`, which gets the same anchored-to-the-
+          bottom result without the content ever sliding underneath it. */}
+        <nav
+          aria-label="Sections"
+          className="border-line bg-surface shrink-0 border-t-2 pb-[env(safe-area-inset-bottom)] sm:hidden"
+        >
+          <div className="mx-auto flex w-full max-w-2xl items-stretch">
             {TABS.map(({ id, label }) => {
               const active = id === tab;
               return (
                 <button
                   key={id}
-                  ref={(node) => {
-                    if (node) tabRefs.current.set(id, node);
-                    else tabRefs.current.delete(id);
-                  }}
                   type="button"
-                  role="tab"
-                  id={`tab-${id}`}
-                  aria-selected={active}
+                  aria-current={active ? "page" : undefined}
                   aria-controls={`panel-${id}`}
                   onClick={() => select(id)}
-                  className={`pressable focus-ring font-display relative z-10 px-2 py-1 text-[11px] font-semibold tracking-[0.12em] whitespace-nowrap uppercase ${
-                    active ? "text-ink" : "text-muted hover:text-ink"
+                  className={`focus-ring font-display relative flex flex-1 flex-col items-center gap-0.5 px-1 pt-2.5 pb-2 text-[9.5px] font-semibold tracking-[0.08em] uppercase transition-colors ${
+                    active ? "text-ink" : "text-muted"
                   }`}
                 >
+                  <span
+                    aria-hidden="true"
+                    className={`bg-gold absolute top-0 h-[3px] w-1/2 transition-opacity ${
+                      active ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  {ICONS[id]}
                   {label}
                 </button>
               );
             })}
           </div>
-        </div>
-      </header>
-
-      {visited.has("learn") && (
-        <div
-          role="tabpanel"
-          id="panel-learn"
-          aria-labelledby="tab-learn"
-          className={tab === "learn" ? PANEL : "hidden"}
-        >
-          <LearnTab
-            active={tab === "learn"}
-            activeLesson={activeLesson}
-            onStart={(lesson) => beginFocus(lesson.id)}
-          />
-        </div>
-      )}
-
-      <div
-        role="tabpanel"
-        id="panel-chat"
-        aria-labelledby="tab-chat"
-        className={tab === "chat" ? PANEL : "hidden"}
-      >
-        <Chat
-          activeLesson={activeLesson}
-          onStartLesson={(lesson) => beginFocus(lesson.id)}
-          onEndLesson={() => setActiveLesson(null)}
-        />
+        </nav>
       </div>
-
-      {visited.has("practice") && (
-        <div
-          role="tabpanel"
-          id="panel-practice"
-          aria-labelledby="tab-practice"
-          className={tab === "practice" ? PANEL : "hidden"}
-        >
-          <PracticeTab active={tab === "practice"} />
-        </div>
-      )}
-
-      {visited.has("progress") && (
-        <div
-          role="tabpanel"
-          id="panel-progress"
-          aria-labelledby="tab-progress"
-          className={tab === "progress" ? PANEL : "hidden"}
-        >
-          <ProgressTab active={tab === "progress"} />
-        </div>
-      )}
-
-      {visited.has("grammar") && (
-        <div
-          role="tabpanel"
-          id="panel-grammar"
-          aria-labelledby="tab-grammar"
-          className={tab === "grammar" ? PANEL : "hidden"}
-        >
-          <GrammarTab
-            active={tab === "grammar"}
-            activeFocus={activeLesson}
-            onPractice={beginFocus}
-          />
-        </div>
-      )}
-
-      {/* Phone navigation. It is the last flex item of a full-height column
-          rather than `position: fixed`, which gets the same anchored-to-the-
-          bottom result without the content ever sliding underneath it. */}
-      <nav
-        aria-label="Sections"
-        className="border-line bg-surface shrink-0 border-t-2 pb-[env(safe-area-inset-bottom)] sm:hidden"
-      >
-        <div className="mx-auto flex w-full max-w-2xl items-stretch">
-          {TABS.map(({ id, label }) => {
-            const active = id === tab;
-            return (
-              <button
-                key={id}
-                type="button"
-                aria-current={active ? "page" : undefined}
-                aria-controls={`panel-${id}`}
-                onClick={() => select(id)}
-                className={`focus-ring font-display relative flex flex-1 flex-col items-center gap-0.5 px-1 pt-2.5 pb-2 text-[9.5px] font-semibold tracking-[0.08em] uppercase transition-colors ${
-                  active ? "text-ink" : "text-muted"
-                }`}
-              >
-                <span
-                  aria-hidden="true"
-                  className={`bg-gold absolute top-0 h-[3px] w-1/2 transition-opacity ${
-                    active ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-                {ICONS[id]}
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
+    </AccountProvider>
   );
 }
