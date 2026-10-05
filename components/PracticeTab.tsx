@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { TYPE_LABELS, type ErrorRecord } from "@/lib/error-log";
+import type { SrsQuality } from "@/lib/srs";
+import { getStore, type SrsCard } from "@/lib/store";
 import { CheckMark } from "./CheckMark";
 import { LogoMark } from "./LogoMark";
 import { useCountUp } from "./useCountUp";
+import { useDueCards } from "./useDueCards";
 import { useErrorRecords } from "./useErrorRecords";
 
 const MAX_DRILLS = 20;
@@ -16,7 +19,11 @@ const GOOD_SCORE = 0.8;
 interface Drill extends ErrorRecord {
   /** The learner's sentence with the error fixed — the target answer. */
   expected: string;
+  /** Set in review mode: the SRS card this drill grades. */
+  cardId?: string;
 }
+
+type Mode = "mistakes" | "review";
 
 /** Counters are set as two-digit editorial numerals: 01, 02, … */
 function index2(n: number): string {
@@ -29,7 +36,14 @@ function index2(n: number): string {
  */
 export function PracticeTab({ active }: { active: boolean }) {
   const { records } = useErrorRecords(active);
-  const queue = useMemo(() => buildQueue(records), [records]);
+  const mistakesQueue = useMemo(() => buildQueue(records), [records]);
+  const dueCards = useDueCards(active);
+
+  const [mode, setMode] = useState<Mode>("mistakes");
+  /** Frozen at session start: grading a card takes it out of the live due
+   *  set, and the queue must not shift under the learner mid-session. */
+  const [reviewQueue, setReviewQueue] = useState<Drill[]>([]);
+  const queue = mode === "review" ? reviewQueue : mistakesQueue;
 
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
@@ -68,13 +82,33 @@ export function PracticeTab({ active }: { active: boolean }) {
     inputRef.current?.focus();
   }
 
-  function restart() {
+  function reset() {
     setIndex(0);
     setAnswer("");
     setAttempts(0);
     setStatus("open");
     setScore(0);
     setRound((r) => r + 1);
+  }
+
+  function startMode(m: Mode) {
+    if (m === "review") setReviewQueue(cardsToQueue(dueCards));
+    setMode(m);
+    reset();
+  }
+
+  function restart() {
+    // A finished review session has usually emptied the due set; fall back
+    // to the mistakes drill rather than an empty round.
+    if (mode === "review") startMode(dueCards.length > 0 ? "review" : "mistakes");
+    else reset();
+  }
+
+  function grade(quality: SrsQuality) {
+    if (mode !== "review" || !drill?.cardId) return;
+    getStore()
+      .reviewCard(drill.cardId, quality, Date.now())
+      .catch(() => {});
   }
 
   function check() {
@@ -86,17 +120,25 @@ export function PracticeTab({ active }: { active: boolean }) {
     if (isCorrect(answer, drill)) {
       setStatus("correct");
       setScore((s) => s + 1);
+      grade(attempts === 0 ? 5 : 3);
       return;
     }
     const used = attempts + 1;
     setAttempts(used);
     setStatus(used >= 2 ? "revealed" : "wrong");
+    if (used >= 2) grade(0);
     setShakeAt(Date.now());
   }
+
+  const toggle =
+    dueCards.length > 0 || mode === "review" ? (
+      <ModeToggle mode={mode} due={dueCards.length} onSelect={startMode} />
+    ) : null;
 
   if (queue.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-10 text-center">
+        {toggle}
         <LogoMark className="h-14 w-14 text-lg" />
         <h2 className="font-display text-lg font-bold tracking-tight">
           Nothing to practice yet
@@ -125,6 +167,7 @@ export function PracticeTab({ active }: { active: boolean }) {
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6">
       <div className="mx-auto max-w-md">
+        {toggle && <div className="mb-5">{toggle}</div>}
         {/* The header and meter live OUTSIDE the keyed wrapper: they have to
             persist across exercises for the bar to animate rather than mount
             already-filled. */}
@@ -276,6 +319,49 @@ export function PracticeTab({ active }: { active: boolean }) {
   );
 }
 
+/** Mistakes drill vs. spaced-repetition review — the Grammar tab's square
+ *  filter chips, so the switch reads as part of the same system. */
+function ModeToggle({
+  mode,
+  due,
+  onSelect,
+}: {
+  mode: Mode;
+  due: number;
+  onSelect: (m: Mode) => void;
+}) {
+  const options: { id: Mode; label: string }[] = [
+    { id: "mistakes", label: "Mistakes" },
+    { id: "review", label: `Review ${due} due` },
+  ];
+  return (
+    <div
+      role="group"
+      aria-label="Practice mode"
+      className="flex flex-wrap items-center gap-1.5"
+    >
+      {options.map(({ id, label }) => {
+        const on = id === mode;
+        return (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={on}
+            onClick={() => onSelect(id)}
+            className={`pressable focus-ring font-display rounded-sm border-2 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] tabular-nums uppercase ${
+              on
+                ? "border-ink bg-gold text-gold-ink"
+                : "border-line text-muted hover:border-ink hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** End-of-session score card. */
 function Summary({
   score,
@@ -357,6 +443,24 @@ function buildQueue(records: ErrorRecord[]): Drill[] {
     drills.push({ ...r, expected: r.message.replace(r.span, r.correction) });
   }
   return drills;
+}
+
+/** Due SRS cards as drills, most overdue first, same cap and checks. */
+function cardsToQueue(cards: SrsCard[]): Drill[] {
+  return cards
+    .filter((c) => c.span && c.sourceMessage.includes(c.span))
+    .slice(0, MAX_DRILLS)
+    .map((c) => ({
+      ts: c.createdAt,
+      level: c.level,
+      message: c.sourceMessage,
+      span: c.span,
+      type: c.type,
+      correction: c.correction,
+      explanation: c.explanation,
+      expected: c.sourceMessage.replace(c.span, c.correction),
+      cardId: c.id,
+    }));
 }
 
 /** Text before and after the first occurrence of the erroneous span. */

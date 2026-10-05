@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791200628234,
+      "tag": "0000_init_accounts_srs",
+      "breakpoints": true
+    }
+  ]
+}

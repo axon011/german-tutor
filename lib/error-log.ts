@@ -100,21 +100,25 @@ export function appendErrorLog(
   message: string,
   level: CefrLevel,
 ) {
-  if (typeof window === "undefined" || errors.length === 0) return;
+  const ts = Date.now();
+  appendErrorRecords(
+    errors.map((e) => ({
+      ts,
+      level,
+      message,
+      span: e.span,
+      type: e.type,
+      correction: e.correction,
+      explanation: e.explanation,
+    })),
+  );
+}
+
+/** Append ready-made rows (the ProgressStore entry point). */
+export function appendErrorRecords(records: ErrorRecord[]) {
+  if (typeof window === "undefined" || records.length === 0) return;
   try {
-    const ts = Date.now();
-    const log = readErrorLog();
-    for (const e of errors) {
-      log.push({
-        ts,
-        level,
-        message,
-        span: e.span,
-        type: e.type,
-        correction: e.correction,
-        explanation: e.explanation,
-      });
-    }
+    const log = readErrorLog().concat(records);
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify(log.slice(-MAX_RECORDS)),
