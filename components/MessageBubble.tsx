@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
 import { splitTranslation } from "@/lib/translation";
+import { annotate, applyCorrections } from "@/lib/annotate";
 
 export function MessageBubble({
   message,
@@ -18,6 +19,10 @@ export function MessageBubble({
   const segments =
     isUser && corrections?.length
       ? annotate(message.content, corrections)
+      : null;
+  const corrected =
+    isUser && corrections?.length
+      ? applyCorrections(message.content, corrections)
       : null;
   const open = openIndex !== null ? corrections?.[openIndex] : undefined;
   // A1/A2 replies carry a trailing `EN:` translation line. Split per render,
@@ -80,6 +85,13 @@ export function MessageBubble({
         </div>
       </div>
 
+      {corrected && (
+        <p className="max-w-[82%] text-right text-[13px] leading-relaxed">
+          <span className="kicker text-muted mr-1.5">Corrected</span>
+          <span className="text-success font-medium">{corrected}</span>
+        </p>
+      )}
+
       {open && (
         <div className="border-line border-l-danger bg-surface max-w-[86%] rounded-sm border-2 border-l-[3px] px-3 py-2.5 text-xs">
           <div className="flex flex-wrap items-center gap-1.5">
@@ -105,37 +117,4 @@ export function TypeChip({ type }: { type: CorrectionError["type"] }) {
       {type}
     </span>
   );
-}
-
-interface Segment {
-  text: string;
-  /** Index into the corrections array, or undefined for plain text. */
-  errorIndex?: number;
-}
-
-/**
- * Split `content` into plain and highlighted segments.
- *
- * Left-to-right, non-overlapping, first-occurrence-after-the-last-match: each
- * error claims the first occurrence of its span at or after the previous
- * match's end. An error whose span no longer occurs there (duplicate spans,
- * spans the model listed out of order, spans already consumed by an earlier
- * error) is simply skipped — dropping a highlight is fine, mangling the
- * learner's text is not.
- */
-function annotate(content: string, errors: CorrectionError[]): Segment[] {
-  const segments: Segment[] = [];
-  let cursor = 0;
-
-  errors.forEach((error, errorIndex) => {
-    if (!error.span) return;
-    const start = content.indexOf(error.span, cursor);
-    if (start === -1) return;
-    if (start > cursor) segments.push({ text: content.slice(cursor, start) });
-    segments.push({ text: error.span, errorIndex });
-    cursor = start + error.span.length;
-  });
-
-  if (cursor < content.length) segments.push({ text: content.slice(cursor) });
-  return segments;
 }

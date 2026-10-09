@@ -51,7 +51,12 @@ Rules:
 - "span" MUST be an EXACT contiguous substring copied character-for-character from the learner's message. It is used to highlight the error in the UI. If you cannot quote it exactly, omit that error entirely.
 - "correction" is the fixed span only — not the whole sentence.
 - Use the SHORTEST span that contains the error (a word or short phrase, not the whole sentence). Spans of different errors must not overlap each other.
-- "type" is one of: grammar, vocabulary, spelling, word-order.
+- "type" is exactly one of:
+  - "grammar": wrong verb form or conjugation (including a wrongly built past participle, e.g. "gelest" → "gelesen"), wrong auxiliary (haben/sein), wrong case, article, gender or adjective ending, wrong preposition.
+  - "word-order": the right words in the wrong position (verb-second, verb-final in subordinate clauses).
+  - "vocabulary": a real word that is the wrong choice for the meaning.
+  - "spelling": typos, capitalization, ß/ss only — never a wrong grammatical form.
+- Never return an error whose "correction" is identical to its "span".
 - "explanation" is ONE short sentence.
 - Do not invent errors. A correct message has an empty list, and an empty list is a perfectly good answer.
 - List at most 10 errors, the most important ones first.
@@ -124,7 +129,12 @@ export async function runCorrector(
 
     // The UI highlights by substring match, so a span the model paraphrased
     // instead of quoting would render as nothing at all. Drop those.
-    return errors.filter((e) => message.includes(e.span)).slice(0, 10);
+    // Also drop no-ops: the model occasionally returns "Freundin → Freundin",
+    // which would underline a correct word and be saved as a fake mistake.
+    return errors
+      .filter((e) => message.includes(e.span))
+      .filter((e) => e.correction.trim() !== e.span.trim())
+      .slice(0, 10);
   } catch (err) {
     // A 429 (free-tier tokens/min, shared with the chat) is otherwise
     // indistinguishable from "no mistakes" — give it its own log line.
