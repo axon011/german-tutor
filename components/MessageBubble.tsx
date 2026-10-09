@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ChatMessage } from "@/lib/llm/provider";
 import type { CorrectionError } from "@/lib/corrector";
+import { splitTranslation } from "@/lib/translation";
 
 export function MessageBubble({
   message,
@@ -19,6 +20,9 @@ export function MessageBubble({
       ? annotate(message.content, corrections)
       : null;
   const open = openIndex !== null ? corrections?.[openIndex] : undefined;
+  // A1/A2 replies carry a trailing `EN:` translation line. Split per render,
+  // so a translation that is still streaming in simply grows under the rule.
+  const reply = isUser ? null : splitTranslation(message.content);
 
   return (
     <div
@@ -64,7 +68,15 @@ export function MessageBubble({
                   </button>
                 ),
               )
-            : message.content}
+            : (reply?.german ?? message.content)}
+          {reply?.english && (
+            <div className="border-line mt-2 border-t pt-2">
+              <span className="kicker text-muted mb-1 block">English</span>
+              <p className="text-muted text-[13px] leading-relaxed">
+                {reply.english}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 

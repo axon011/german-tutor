@@ -8,6 +8,7 @@ import { toErrorRecords } from "@/lib/error-log";
 import { lessonsForLevel, type Lesson } from "@/lib/curriculum";
 import { getFocusEntry, type FocusEntry } from "@/lib/focus";
 import { COMPLETE_TURNS, type LessonProgress } from "@/lib/lesson-progress";
+import { splitTranslation } from "@/lib/translation";
 import { CheckMark } from "./CheckMark";
 import { Kicker } from "./Kicker";
 import { LEVEL_CHIP, LEVEL_CHIP_ON } from "./levelStyles";
@@ -151,10 +152,21 @@ export function Chat({
     // reply must start streaming immediately; corrections annotate the message
     // a second or two later, and a corrector failure is a non-event.
     const userIndex = history.length - 1;
+    // The tutor's last message tells the Corrector what the learner is
+    // answering ("Wie heißt du?" makes "Ich habe Aravind" an error). German
+    // part only — the A1/A2 translation line is noise to a grammar check.
+    const lastReply = messages.findLast((m) => m.role === "assistant");
+    const context = lastReply?.content
+      ? splitTranslation(lastReply.content).german.slice(0, 400)
+      : "";
     fetch("/api/correct", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: content, level }),
+      body: JSON.stringify({
+        message: content,
+        level,
+        ...(context ? { context } : {}),
+      }),
     })
       .then((res) => res.json())
       .then(({ errors }: { errors?: CorrectionError[] }) => {
@@ -283,7 +295,7 @@ export function Chat({
             </h2>
             <p className="text-muted max-w-md text-sm leading-relaxed">
               {level === "A1"
-                ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German and translates new words for you."
+                ? "Complete beginner? No problem — write in English or German. The tutor answers in very simple German, with an English translation under every reply."
                 : `Write something in German — the tutor adapts to your level (${level}) and helps you reach the next one.`}
             </p>
             {!focus && !everCompleted && onStartLesson && (

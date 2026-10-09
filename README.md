@@ -11,7 +11,7 @@ Duolingo teaches everyone the same German; ChatGPT forgets your mistakes. This a
 | Tab | Feature |
 |---|---|
 | **Learn** | 32 guided CEFR lessons (A1→B2). Each lesson steers a live conversation — the tutor gets a hidden topic + grammar focus and takes the lead. |
-| **Chat** | Streaming German conversation adapted to your level (A1–B2). At A1 the tutor glosses new words in English and accepts English input. Errors are *recast* naturally, never lectured. |
+| **Chat** | Streaming German conversation adapted to your level (A1–B2). At A1 and A2 every reply comes with a full English translation, and A1 accepts English input. Errors are *recast* naturally, never lectured. |
 | **Practice** | Drills built from **your own past mistakes**: rewrite your wrong sentences; deterministic checking against the stored correction — zero LLM cost. |
 | **Progress** | A rule-based recommender ("Practice today") ranks your error types by frequency × recency-decay (7-day half-life) and picks your focus. Stats, per-type breakdown, 14-day activity strip. |
 | **Grammar** | A 40-rule visual reference (A1→B2): typographic glyph cards ("der die das", "V2", "…, weil"), English explanations, correct declension tables — and every rule launches a focused practice conversation. |

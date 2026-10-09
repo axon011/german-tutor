@@ -12,6 +12,12 @@ import type { CefrLevel } from "./tutor-prompt";
  * error whose span doesn't literally occur is dropped here rather than
  * silently failing to render.
  *
+ * The tutor's previous message rides along as context. Without it, "Ich habe
+ * Aravind" (in reply to "Wie heißt du?") reads as a valid "I have Aravind",
+ * and the model's verdict flips run to run. The context is for meaning only —
+ * spans still come from the learner's message, which the substring filter
+ * below enforces regardless of what the prompt says.
+ *
  * Best-effort by design — a malformed model response yields no corrections,
  * never an exception. Grammar annotations are a bonus; the conversation is the
  * product.
@@ -37,9 +43,11 @@ export const correctorResponseSchema = z.object({
 
 export type CorrectionError = z.infer<typeof correctionErrorSchema>;
 
-const BASE_PROMPT = `You are a precise German language error analyst working for a language tutor. You are given ONE message written by a learner. List the errors it contains.
+const BASE_PROMPT = `You are a precise German language error analyst working for a language tutor. You are given ONE message written by a learner. List the errors it contains. Sometimes the tutor's previous message is given first, as context.
 
 Rules:
+- Analyze ONLY the learner message. The tutor's message is context for meaning (what the learner is answering) — never take errors or spans from it.
+- An answer that does not fit the tutor's question is an error, e.g. answering "Wie heißt du?" with "Ich habe Aravind" (→ "Ich heiße Aravind").
 - "span" MUST be an EXACT contiguous substring copied character-for-character from the learner's message. It is used to highlight the error in the UI. If you cannot quote it exactly, omit that error entirely.
 - "correction" is the fixed span only — not the whole sentence.
 - Use the SHORTEST span that contains the error (a word or short phrase, not the whole sentence). Spans of different errors must not overlap each other.
@@ -50,13 +58,26 @@ Rules:
 
 OUTPUT: STRICT JSON only, exactly {"errors":[{"span":"…","type":"…","correction":"…","explanation":"…"}]} with double quotes. No markdown fences, no prose, no commentary before or after.`;
 
+/**
+ * Shared by A1 and A2. These are the errors a beginner makes in the first
+ * week and must hear about; "only errors that block understanding" alone let
+ * the model wave through "Ich habe 25 Jahre" as understandable.
+ */
+const BEGINNER_MUST_CATCH = `ALWAYS flag these beginner errors, even when the meaning is guessable:
+  - wrong verb for name, age or job (haben/sein/heißen): "Ich habe 25 Jahre" → "Ich bin 25 Jahre alt"; "Ich habe Aravind" (answering "Wie heißt du?") → "Ich heiße Aravind"; "Ich habe Ingenieur" → "Ich bin Ingenieur".
+  - wrong verb conjugation ("ich bist", "du habe", "er gehen").
+  - missing capitalization of nouns and of the first word of a sentence ("ich wohne in berlin" → "Ich", "Berlin").
+  - verb not in second position in a main clause ("Heute ich gehe" → "Heute gehe ich").`;
+
 const LEVEL_GUIDANCE: Record<CefrLevel, string> = {
   A1: `The learner is at A1. Write every "explanation" in English.
 - Do NOT flag missing umlauts typed as ae/oe/ue (many learners have no German keyboard). Instead, give the properly spelled form inside "correction" and move on.
-- Flag only errors that block understanding. Ignore style.`,
+- ${BEGINNER_MUST_CATCH}
+- Beyond those, flag only errors that block understanding. Ignore style.`,
   A2: `The learner is at A2. Write every "explanation" in English.
 - Do NOT flag missing umlauts typed as ae/oe/ue (many learners have no German keyboard). Instead, give the properly spelled form inside "correction" and move on.
-- Focus on cases, verb forms and basic word order. Ignore style.`,
+- ${BEGINNER_MUST_CATCH}
+- Also focus on cases, verb forms and basic word order. Ignore style.`,
   B1: `The learner is at B1. Write every "explanation" in simple German.
 - Focus on cases, verb position, tense and prepositions. Mention style only when it is clearly wrong.`,
   B2: `The learner is at B2. Write every "explanation" in simple German.
@@ -68,30 +89,50 @@ export function correctorSystemPrompt(level: CefrLevel): string {
 }
 
 /**
- * Analyze one learner message. Returns [] on any failure — parse error, schema
- * mismatch, provider crash — so callers never have to handle correction errors.
+ * Analyze one learner message, optionally with the tutor's previous message
+ * as context (its German part only). Returns [] on any failure — parse error,
+ * schema mismatch, provider crash — so callers never have to handle
+ * correction errors.
  */
 export async function runCorrector(
   provider: LLMProvider,
   level: CefrLevel,
   message: string,
+  context?: string,
 ): Promise<CorrectionError[]> {
+  const userTurn = context
+    ? `Tutor's previous message (context only, do not analyze): "${context}"\n\nLearner message:\n${message}`
+    : message;
   try {
     let raw = "";
     for await (const chunk of provider.streamChat(correctorSystemPrompt(level), [
-      { role: "user", content: message },
+      { role: "user", content: userTurn },
     ])) {
       raw += chunk;
     }
 
-    const parsed = correctorResponseSchema.safeParse(JSON.parse(stripFences(raw)));
+    // Validate per item, not per response: one error with an off-list `type`
+    // must not throw away the valid ones next to it.
+    const parsed = z
+      .object({ errors: z.array(z.unknown()) })
+      .safeParse(JSON.parse(stripFences(raw)));
     if (!parsed.success) return [];
+    const errors = parsed.data.errors.flatMap((e) => {
+      const item = correctionErrorSchema.safeParse(e);
+      return item.success ? [item.data] : [];
+    });
 
     // The UI highlights by substring match, so a span the model paraphrased
     // instead of quoting would render as nothing at all. Drop those.
-    return parsed.data.errors.filter((e) => message.includes(e.span));
+    return errors.filter((e) => message.includes(e.span)).slice(0, 10);
   } catch (err) {
-    console.error("corrector failed:", err);
+    // A 429 (free-tier tokens/min, shared with the chat) is otherwise
+    // indistinguishable from "no mistakes" — give it its own log line.
+    if (err instanceof Error && err.message.includes("429")) {
+      console.error("corrector rate-limited:", err.message);
+    } else {
+      console.error("corrector failed:", err);
+    }
     return [];
   }
 }
