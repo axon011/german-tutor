@@ -11,6 +11,7 @@ import { isCompleted, type LessonProgress } from "@/lib/lesson-progress";
 import { CEFR_LEVELS, isCefrLevel, type CefrLevel } from "@/lib/tutor-prompt";
 import { CheckMark } from "./CheckMark";
 import { Kicker } from "./Kicker";
+import { LessonSheet } from "./LessonSheet";
 import { LEVEL_CHIP, LEVEL_CHIP_ON } from "./levelStyles";
 import { useLessonProgress } from "./useLessonProgress";
 
@@ -21,8 +22,9 @@ function index2(n: number): string {
 
 /**
  * The guided path: four level sections, eight lessons each, laid out as a grid
- * of catalogue plates. Every tile launches a focused conversation in the
- * Conversation tab — the Learn tab itself never talks to the model.
+ * of catalogue plates. A tile opens that lesson's study sheet; the sheet's
+ * "Start conversation" launches a focused chat in the Conversation tab — the
+ * Learn tab itself never talks to the model.
  */
 export function LearnTab({
   active,
@@ -35,6 +37,8 @@ export function LearnTab({
 }) {
   const progress = useLessonProgress(active);
   const [level, setLevel] = useState<CefrLevel>("B1");
+  /** The lesson whose study sheet is open, if any. */
+  const [openId, setOpenId] = useState<string | null>(null);
 
   // The learner's own level decides where the "Start here" beacon sits. Read
   // on activation, because the Chat tab may have changed it since last visit.
@@ -63,67 +67,87 @@ export function LearnTab({
   // single list unrolling rather than four that restart.
   let row = 0;
 
+  const open = openId ? LESSONS.find((l) => l.id === openId) : undefined;
+  const openNumber = open ? lessonsForLevel(open.level).indexOf(open) + 1 : 0;
+
   return (
-    <div className="flex-1 space-y-7 overflow-y-auto px-4 py-6">
-      <header>
-        <Kicker index="01" label="Learn" />
-        <h2 className="font-display mt-2.5 text-base font-bold tracking-tight">
-          Your learning path
-        </h2>
-        <p className="text-muted mt-1 text-xs leading-relaxed">
-          Pick a lesson and the tutor steers the conversation to that topic and
-          its grammar. {LESSONS.length} lessons, A1 to B2.
-        </p>
-      </header>
+    // `relative` anchors the study sheet to this tab, so it overlays the tab
+    // and not the brand header and tab bar, like the Grammar tab's sheet.
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <div className="flex-1 space-y-7 overflow-y-auto px-4 py-6">
+        <header>
+          <Kicker index="01" label="Learn" />
+          <h2 className="font-display mt-2.5 text-base font-bold tracking-tight">
+            Your learning path
+          </h2>
+          <p className="text-muted mt-1 text-xs leading-relaxed">
+            Pick a lesson to study its words, phrases and grammar, then practise
+            it in a conversation with the tutor. {LESSONS.length} lessons, A1 to
+            B2.
+          </p>
+        </header>
 
-      {CEFR_LEVELS.map((l) => {
-        const lessons = lessonsForLevel(l);
-        const done = lessons.filter((x) => isCompleted(progress[x.id])).length;
-        return (
-          <section key={l}>
-            <div className="flex items-center gap-2">
-              <span
-                className={`px-2.5 py-1 text-xs ${
-                  done === lessons.length ? LEVEL_CHIP_ON : LEVEL_CHIP
-                }`}
-              >
-                {l}
-              </span>
-              <h3 className="font-display flex-1 text-sm font-bold">
-                {LEVEL_NAMES[l]}
-              </h3>
-              <span className="font-display text-muted text-xs font-semibold tabular-nums">
-                {done}/{lessons.length}
-              </span>
-            </div>
-            <div className="bg-ink/10 mt-2 h-2 overflow-hidden">
-              <div
-                className="grow-bar bg-gold h-full"
-                style={{
-                  width: grown ? `${(done / lessons.length) * 100}%` : "0%",
-                }}
-              />
-            </div>
-
-            {/* mt-4 rather than mt-3: the "Start here" chip hangs above its
-                tile, and needs the extra clearance under the progress bar. */}
-            <ol className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {lessons.map((lesson, i) => (
-                <LessonTile
-                  key={lesson.id}
-                  lesson={lesson}
-                  number={i + 1}
-                  progress={progress}
-                  isBeacon={lesson.id === beaconId}
-                  isActive={lesson.id === activeLesson}
-                  delayIndex={row++}
-                  onStart={onStart}
+        {CEFR_LEVELS.map((l) => {
+          const lessons = lessonsForLevel(l);
+          const done = lessons.filter((x) =>
+            isCompleted(progress[x.id]),
+          ).length;
+          return (
+            <section key={l}>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`px-2.5 py-1 text-xs ${
+                    done === lessons.length ? LEVEL_CHIP_ON : LEVEL_CHIP
+                  }`}
+                >
+                  {l}
+                </span>
+                <h3 className="font-display flex-1 text-sm font-bold">
+                  {LEVEL_NAMES[l]}
+                </h3>
+                <span className="font-display text-muted text-xs font-semibold tabular-nums">
+                  {done}/{lessons.length}
+                </span>
+              </div>
+              <div className="bg-ink/10 mt-2 h-2 overflow-hidden">
+                <div
+                  className="grow-bar bg-gold h-full"
+                  style={{
+                    width: grown ? `${(done / lessons.length) * 100}%` : "0%",
+                  }}
                 />
-              ))}
-            </ol>
-          </section>
-        );
-      })}
+              </div>
+
+              {/* mt-4 rather than mt-3: the "Start here" chip hangs above its
+                tile, and needs the extra clearance under the progress bar. */}
+              <ol className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {lessons.map((lesson, i) => (
+                  <LessonTile
+                    key={lesson.id}
+                    lesson={lesson}
+                    number={i + 1}
+                    progress={progress}
+                    isBeacon={lesson.id === beaconId}
+                    isActive={lesson.id === activeLesson}
+                    delayIndex={row++}
+                    onOpen={() => setOpenId(lesson.id)}
+                  />
+                ))}
+              </ol>
+            </section>
+          );
+        })}
+      </div>
+
+      {open && (
+        <LessonSheet
+          lesson={open}
+          number={openNumber}
+          done={isCompleted(progress[open.id])}
+          onClose={() => setOpenId(null)}
+          onStart={onStart}
+        />
+      )}
     </div>
   );
 }
@@ -140,7 +164,7 @@ function LessonTile({
   isBeacon,
   isActive,
   delayIndex,
-  onStart,
+  onOpen,
 }: {
   lesson: Lesson;
   number: number;
@@ -148,12 +172,12 @@ function LessonTile({
   isBeacon: boolean;
   isActive: boolean;
   delayIndex: number;
-  onStart: (lesson: Lesson) => void;
+  onOpen: () => void;
 }) {
   const entry = progress[lesson.id];
   const done = isCompleted(entry);
   const started = Boolean(entry) && !done;
-  const status = done ? "Done" : started ? "Continue" : "Start";
+  const status = done ? "Done" : started ? "Continue" : "Open";
 
   return (
     <li
@@ -165,10 +189,10 @@ function LessonTile({
           micro-label want — only the description opts back out. */}
       <button
         type="button"
-        onClick={() => onStart(lesson)}
+        onClick={onOpen}
         aria-current={isActive ? "true" : undefined}
         aria-label={`Lesson ${number}: ${lesson.title} — ${
-          done ? "done, review again" : started ? "continue" : "start"
+          done ? "done, review again" : started ? "continue" : "open lesson"
         }`}
         className={`btn-hard focus-ring bg-surface relative flex h-full w-full flex-col rounded-sm border-2 p-3.5 text-left ${
           isBeacon ? "border-gold" : "border-line hover:border-ink/40"
