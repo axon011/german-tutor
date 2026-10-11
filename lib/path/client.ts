@@ -1,15 +1,7 @@
 import type { TodayState, WordCard, WordReviewQuality } from "./types";
 
-/**
- * The learner's LOCAL calendar day as YYYY-MM-DD. Built from local date parts
- * on purpose: `toISOString()` is UTC and would roll the "day" over at the
- * wrong hour for anyone away from Greenwich, breaking the streak.
- */
-export function localDay(d = new Date()): string {
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
-}
+// One implementation of the learner-local day, shared with the store.
+export { localDay } from "./day";
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
