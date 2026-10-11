@@ -57,6 +57,8 @@ Login is optional. Guests keep everything in the browser (localStorage), exactly
 - **SM-2 review.** Each distinct drillable mistake becomes a spaced-repetition card (`lib/srs.ts`, `lib/srs-cards.ts`). The same derivation rule runs in the browser and on the server.
 - **First sign-in import.** If the browser already has guest history, a banner offers to copy it into the account once. The import is idempotent, so running it twice never duplicates rows.
 
+**Audio (beta).** The German in each lesson (words with their article, phrases, dialogue lines) is pre-generated with Piper's `thorsten` voice by `npm run audio:build` and served as content-hashed mp3s from `public/audio`. If a clip is missing the browser's own speech synthesis steps in. Playback buttons, "Play dialogue" and the listening drill are shown to beta accounts only.
+
 If `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET` or `DATABASE_URL` is missing, the sign-in button is not rendered and the app runs guest-only.
 
 ## Run it locally

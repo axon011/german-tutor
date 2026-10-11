@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getLesson, lessonsForLevel } from "@/lib/curriculum";
+import { getLessonContent, type VocabItem } from "@/lib/lessons";
 import { COMPLETE_TURNS } from "@/lib/lesson-progress";
 import { fetchToday, localDay, postCheck } from "@/lib/path/client";
 import type { TodayState } from "@/lib/path/types";
 import { CheckMark } from "./CheckMark";
 import { Kicker } from "./Kicker";
 import { LessonSheet } from "./LessonSheet";
+import { ListeningDrill } from "./ListeningDrill";
 import { WordReview } from "./WordReview";
 
 /**
@@ -32,6 +34,8 @@ export function TodayTab({
   const [error, setError] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  /** Words for an open listening drill; null when it is closed. */
+  const [listenWords, setListenWords] = useState<VocabItem[] | null>(null);
 
   const load = useCallback(() => {
     setError(false);
@@ -57,6 +61,33 @@ export function TodayTab({
   const speakDone = !!state && state.today.turns >= COMPLETE_TURNS;
   const allDone =
     !!state && reviewDone && (nextId === null || (learnDone && speakDone));
+
+  /**
+   * Words from lessons the learner has actually studied (a quick check was
+   * taken); the drill shuffles and caps them itself.
+   */
+  function studiedWords(): VocabItem[] {
+    if (!state) return [];
+    return Object.entries(state.lessons)
+      .filter(([, l]) => l.checkBest !== null)
+      .flatMap(([id]) => getLessonContent(id)?.vocab ?? []);
+  }
+  const canListen =
+    !!state && Object.values(state.lessons).some((l) => l.checkBest !== null);
+
+  if (listenWords) {
+    return (
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <ListeningDrill
+            words={listenWords}
+            title="Listening drill"
+            onDone={() => setListenWords(null)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (reviewing) {
     return (
@@ -146,6 +177,15 @@ export function TodayTab({
                   Mistakes →
                 </button>
               )}
+              {canListen && (
+                <button
+                  type="button"
+                  onClick={() => setListenWords(studiedWords())}
+                  className="focus-ring text-muted hover:text-ink font-display text-xs font-semibold underline underline-offset-4"
+                >
+                  Listening drill
+                </button>
+              )}
             </StepCard>
 
             {nextId && lesson ? (
@@ -213,6 +253,7 @@ export function TodayTab({
           done={!!pathState?.mastered}
           onClose={() => setSheetOpen(false)}
           onStart={(l) => onStart(l.id)}
+          audio
           onChecked={(c, t) =>
             postCheck(nextId, c, t, localDay())
               .then(setState)

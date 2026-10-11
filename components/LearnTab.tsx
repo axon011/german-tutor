@@ -31,12 +31,15 @@ export function LearnTab({
   activeLesson,
   onStart,
   onChecked,
+  audio = false,
 }: {
   active: boolean;
   activeLesson: string | null;
   onStart: (lesson: Lesson) => void;
   /** Beta only: reports each quick-check score for the learning path. */
   onChecked?: (lessonId: string, correct: number, total: number) => void;
+  /** Beta only: playback buttons and the listening drill in the study sheet. */
+  audio?: boolean;
 }) {
   const progress = useLessonProgress(active);
   const [level, setLevel] = useState<CefrLevel>("B1");
@@ -150,6 +153,7 @@ export function LearnTab({
           onClose={() => setOpenId(null)}
           onStart={onStart}
           onChecked={(c, t) => onChecked?.(open.id, c, t)}
+          audio={audio}
         />
       )}
     </div>

@@ -33,6 +33,10 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# audio build inputs (voice model is ~100 MB; texts.json is derived)
+/scripts/audio/voices/
+/scripts/audio/texts.json
+
 # vercel
 .vercel
 

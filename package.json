@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:llm": "tsx scripts/test-claude-code.ts",
     "test": "vitest run",
+    "audio:build": "tsx scripts/audio/list-texts.ts && python scripts/audio/generate.py",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },

@@ -311,6 +311,7 @@ function AppShellBody({
             <LearnTab
               active={tab === "learn"}
               activeLesson={activeLesson}
+              audio={beta}
               onStart={(lesson) => beginFocus(lesson.id)}
               onChecked={
                 beta

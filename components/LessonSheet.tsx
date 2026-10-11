@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { playGerman, stopAudio } from "@/lib/audio/play";
 import type { Lesson } from "@/lib/curriculum";
 import { CATEGORY_META, GRAMMAR_TOPICS } from "@/lib/grammar";
 import {
@@ -12,7 +13,10 @@ import {
   type VocabItem,
 } from "@/lib/lessons";
 import { gradeGap } from "@/lib/lessons/grade";
+import { expectedAnswer } from "@/lib/path/grade-word";
 import { CheckMark } from "./CheckMark";
+import { ListeningDrill } from "./ListeningDrill";
+import { SpeakButton } from "./SpeakButton";
 import { LEVEL_CHIP } from "./levelStyles";
 import { MarkedGerman, RuleTable, SheetFrame } from "./StudySheet";
 
@@ -33,6 +37,10 @@ const ARTICLE_COLOR: Record<Gender, string> = {
  * model; "Start conversation" hands the lesson to the existing `onStart`.
  *
  * A lesson without authored content still opens, with just header and footer.
+ *
+ * `audio` (beta) adds playback: a speaker on every word, phrase and dialogue
+ * line, "Play dialogue", and a "Listen & type" drill that takes over the sheet
+ * body. Left false, the sheet renders exactly as it did before audio existed.
  */
 export function LessonSheet({
   lesson,
@@ -41,6 +49,7 @@ export function LessonSheet({
   onClose,
   onStart,
   onChecked,
+  audio = false,
 }: {
   lesson: Lesson;
   number: number;
@@ -49,8 +58,11 @@ export function LessonSheet({
   onStart: (lesson: Lesson) => void;
   /** Fired on every "Check answers" press with the score after grading. */
   onChecked?: (correct: number, total: number) => void;
+  /** Beta: show playback controls and the listening drill. */
+  audio?: boolean;
 }) {
   const content = getLessonContent(lesson.id);
+  const [drilling, setDrilling] = useState(false);
   const titleId = `${lesson.id}-sheet-title`;
 
   return (
@@ -112,17 +124,47 @@ export function LessonSheet({
         </div>
       }
     >
-      {content && (
-        <LessonBody lesson={lesson} content={content} onChecked={onChecked} />
-      )}
+      {content &&
+        (audio && drilling ? (
+          // Same frame and footer, body swapped: the drill is a task of its own.
+          <ListeningDrill
+            words={content.vocab}
+            title={`${lesson.title} · Listen & type`}
+            onDone={() => setDrilling(false)}
+          />
+        ) : (
+          <LessonBody
+            lesson={lesson}
+            content={content}
+            onChecked={onChecked}
+            audio={audio}
+            onListen={() => setDrilling(true)}
+          />
+        ))}
     </SheetFrame>
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  /** Optional control on the right of the header row. */
+  action?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section className="space-y-2">
-      <p className="kicker text-muted">{title}</p>
+      {action ? (
+        <div className="flex items-center justify-between gap-2">
+          <p className="kicker text-muted">{title}</p>
+          {action}
+        </div>
+      ) : (
+        <p className="kicker text-muted">{title}</p>
+      )}
       {children}
     </section>
   );
@@ -132,10 +174,14 @@ function LessonBody({
   lesson,
   content,
   onChecked,
+  audio,
+  onListen,
 }: {
   lesson: Lesson;
   content: LessonContent;
   onChecked?: (correct: number, total: number) => void;
+  audio: boolean;
+  onListen: () => void;
 }) {
   // Sections number themselves by render order, so a lesson that skips one
   // (e.g. no grammar ids) still reads 1 · 2 · 3 without a gap. The counter
@@ -172,7 +218,20 @@ function LessonBody({
       )}
 
       {content.vocab.length > 0 && (
-        <Section title={label("Words")}>
+        <Section
+          title={label("Words")}
+          action={
+            audio ? (
+              <button
+                type="button"
+                onClick={onListen}
+                className="btn-hard focus-ring px-2.5 py-1 text-[10px] uppercase"
+              >
+                Listen &amp; type
+              </button>
+            ) : undefined
+          }
+        >
           <p className="font-display flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold">
             <span className="text-muted font-sans text-[11px] font-normal">
               Article colours
@@ -187,7 +246,7 @@ function LessonBody({
           </p>
           <ul className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
             {content.vocab.map((v, i) => (
-              <VocabCell key={i} item={v} />
+              <VocabCell key={i} item={v} audio={audio} />
             ))}
           </ul>
         </Section>
@@ -199,14 +258,17 @@ function LessonBody({
             {content.phrases.map((p, i) => (
               <li
                 key={i}
-                className="border-line bg-background rounded-sm border-2 px-3 py-2"
+                className="border-line bg-background flex items-start gap-1 rounded-sm border-2 px-3 py-2"
               >
-                <p className="text-[15px] leading-relaxed">
-                  <MarkedGerman text={p.de} markClass={PHRASE_MARK} />
-                </p>
-                <p className="text-muted mt-0.5 text-[11px] leading-relaxed">
-                  {p.en}
-                </p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] leading-relaxed">
+                    <MarkedGerman text={p.de} markClass={PHRASE_MARK} />
+                  </p>
+                  <p className="text-muted mt-0.5 text-[11px] leading-relaxed">
+                    {p.en}
+                  </p>
+                </div>
+                {audio && <SpeakButton text={p.de} />}
               </li>
             ))}
           </ul>
@@ -283,6 +345,7 @@ function LessonBody({
       {content.dialogue.length > 0 && (
         <Section title={label("Dialogue")}>
           <DialogueScript
+            audio={audio}
             lines={content.dialogue}
             defaultEnglish={lesson.level === "A1" || lesson.level === "A2"}
           />
@@ -298,9 +361,10 @@ function LessonBody({
   );
 }
 
-function VocabCell({ item }: { item: VocabItem }) {
+function VocabCell({ item, audio }: { item: VocabItem; audio: boolean }) {
   return (
     <li className="border-line min-w-0 border-b pb-1.5">
+      <div className="flex items-start justify-between gap-1">
       <p className="text-[15px] leading-snug">
         {item.gender && (
           <span className={`font-medium ${ARTICLE_COLOR[item.gender]}`}>
@@ -314,6 +378,8 @@ function VocabCell({ item }: { item: VocabItem }) {
           </span>
         )}
       </p>
+      {audio && <SpeakButton text={expectedAnswer(item)} className="-mt-1" />}
+      </div>
       <p className="text-muted text-[11px] leading-relaxed">{item.en}</p>
     </li>
   );
@@ -328,40 +394,109 @@ function VocabCell({ item }: { item: VocabItem }) {
 function DialogueScript({
   lines,
   defaultEnglish,
+  audio,
 }: {
   lines: LessonContent["dialogue"];
   defaultEnglish: boolean;
+  audio: boolean;
 }) {
   const [english, setEnglish] = useState(defaultEnglish);
+  /** Index of the line being played; null when the dialogue is not playing. */
+  const [current, setCurrent] = useState<number | null>(null);
+  /** Bumped to cancel a running "Play dialogue" loop. */
+  const run = useRef(0);
   const first = lines[0]?.speaker;
+
+  function stop() {
+    run.current++;
+    stopAudio();
+    setCurrent(null);
+  }
+
+  async function playAll() {
+    const mine = ++run.current;
+    for (let i = 0; i < lines.length; i++) {
+      if (run.current !== mine) return;
+      setCurrent(i);
+      // playGerman also resolves when something else cancels it; the run
+      // check then ends the loop instead of ploughing on to the next line.
+      await playGerman(lines[i].de);
+    }
+    if (run.current === mine) setCurrent(null);
+  }
+
+  // Closing the sheet (or swapping in the drill) must silence the dialogue.
+  useEffect(() => {
+    const token = run;
+    return () => {
+      token.current++;
+      stopAudio();
+    };
+  }, []);
 
   return (
     <div className="space-y-2.5">
-      <button
-        type="button"
-        aria-pressed={english}
-        onClick={() => setEnglish((v) => !v)}
-        className="pressable focus-ring font-display border-line text-muted hover:border-ink hover:text-ink rounded-sm border-2 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] uppercase"
-      >
-        {english ? "Hide English" : "Show English"}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={english}
+          onClick={() => setEnglish((v) => !v)}
+          className="pressable focus-ring font-display border-line text-muted hover:border-ink hover:text-ink rounded-sm border-2 px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] uppercase"
+        >
+          {english ? "Hide English" : "Show English"}
+        </button>
+        {audio && (
+          <button
+            type="button"
+            onClick={current === null ? () => void playAll() : stop}
+            className="btn-hard focus-ring px-2.5 py-1 text-[10px] uppercase"
+          >
+            {current === null ? "Play dialogue" : "Stop"}
+          </button>
+        )}
+      </div>
       <ul className="space-y-2.5">
         {lines.map((l, i) => (
           <li
             key={i}
-            className={
+            className={`${
               l.speaker === first ? "" : "border-gold border-l-[3px] pl-3"
-            }
+            } ${audio ? "flex items-start gap-1 rounded-sm" : ""} ${
+              audio && current === i ? "bg-gold/15" : ""
+            }`}
           >
-            <p className="font-display text-xs font-semibold">{l.speaker}</p>
-            <p className="text-[15px] leading-relaxed">{l.de}</p>
-            {english && (
-              <p className="text-muted text-[11px] leading-relaxed">{l.en}</p>
+            {audio ? (
+              <>
+                <div className="min-w-0 flex-1">
+                  <DialogueLineText line={l} english={english} />
+                </div>
+                <SpeakButton text={l.de} />
+              </>
+            ) : (
+              <DialogueLineText line={l} english={english} />
             )}
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function DialogueLineText({
+  line,
+  english,
+}: {
+  line: LessonContent["dialogue"][number];
+  english: boolean;
+}) {
+  return (
+    <>
+      <p className="font-display text-xs font-semibold">{line.speaker}</p>
+      <p className="text-[15px] leading-relaxed">{line.de}</p>
+      {english && (
+        <p className="text-muted text-[11px] leading-relaxed">{line.en}</p>
+      )}
+    </>
   );
 }
 
