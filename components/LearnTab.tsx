@@ -30,10 +30,13 @@ export function LearnTab({
   active,
   activeLesson,
   onStart,
+  onChecked,
 }: {
   active: boolean;
   activeLesson: string | null;
   onStart: (lesson: Lesson) => void;
+  /** Beta only: reports each quick-check score for the learning path. */
+  onChecked?: (lessonId: string, correct: number, total: number) => void;
 }) {
   const progress = useLessonProgress(active);
   const [level, setLevel] = useState<CefrLevel>("B1");
@@ -146,6 +149,7 @@ export function LearnTab({
           done={isCompleted(progress[open.id])}
           onClose={() => setOpenId(null)}
           onStart={onStart}
+          onChecked={(c, t) => onChecked?.(open.id, c, t)}
         />
       )}
     </div>
