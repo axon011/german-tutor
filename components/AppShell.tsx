@@ -1,6 +1,14 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useSession } from "next-auth/react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { localDay, postCheck } from "@/lib/path/client";
 import { getStore } from "@/lib/store";
 import { AccountControl, AccountProvider, ImportBanner } from "./Account";
 import { Chat } from "./Chat";
@@ -9,8 +17,10 @@ import { LearnTab } from "./LearnTab";
 import { LogoMark } from "./LogoMark";
 import { PracticeTab } from "./PracticeTab";
 import { ProgressTab } from "./ProgressTab";
+import { TodayTab } from "./TodayTab";
 
-export type Tab = "learn" | "chat" | "practice" | "progress" | "grammar";
+export type Tab =
+  "today" | "learn" | "chat" | "practice" | "progress" | "grammar";
 
 /** Stroke-only line icons, sized by the caller. */
 function Icon({ children }: { children: ReactNode }) {
@@ -31,6 +41,13 @@ function Icon({ children }: { children: ReactNode }) {
 }
 
 const ICONS: Record<Tab, ReactNode> = {
+  // Sun.
+  today: (
+    <Icon>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6" />
+    </Icon>
+  ),
   // Graduation cap.
   learn: (
     <Icon>
@@ -82,6 +99,9 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "grammar", label: "Grammar" },
 ];
 
+/** Beta accounts get "Today" as a sixth, first tab — see AppShellInner. */
+const TODAY_TAB = { id: "today" as Tab, label: "Today" };
+
 /** Every tab panel is a centred column that owns the remaining height. */
 const PANEL = "relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col";
 
@@ -102,6 +122,38 @@ const PANEL = "relative mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col";
  * account UI is never rendered and everything stays in the browser.
  */
 export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
+  return (
+    <AccountProvider enabled={authEnabled}>
+      {authEnabled ? (
+        <BetaGate />
+      ) : (
+        <AppShellBody authEnabled={false} beta={false} />
+      )}
+    </AccountProvider>
+  );
+}
+
+/**
+ * useSession only works under the SessionProvider that AccountProvider mounts
+ * when auth is enabled, so reading the beta flag lives in its own component
+ * that is never rendered for guest-only deployments. The server puts `beta`
+ * on the session user for allow-listed logins.
+ */
+function BetaGate() {
+  const { data: session } = useSession();
+  const beta = (session?.user as { beta?: boolean } | undefined)?.beta === true;
+  return <AppShellBody authEnabled beta={beta} />;
+}
+
+function AppShellBody({
+  authEnabled,
+  beta,
+}: {
+  authEnabled: boolean;
+  beta: boolean;
+}) {
+  const tabs = beta ? [TODAY_TAB, ...TABS] : TABS;
+
   const [tab, setTab] = useState<Tab>("chat");
   const [visited, setVisited] = useState<Set<Tab>>(
     () => new Set<Tab>(["chat"]),
@@ -139,6 +191,16 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
     setVisited((prev) => (prev.has(next) ? prev : new Set(prev).add(next)));
   }
 
+  // Land beta learners on Today the first time the session resolves as beta —
+  // once only, so a later session refresh never yanks them off another tab.
+  const landedOnToday = useRef(false);
+  useEffect(() => {
+    if (!beta || landedOnToday.current) return;
+    landedOnToday.current = true;
+    setTab("today");
+    setVisited((prev) => new Set(prev).add("today"));
+  }, [beta]);
+
   /**
    * Arm a lesson or a grammar rule and drop the learner straight into the
    * conversation. Both kinds share the same id space and progress map, so the
@@ -153,7 +215,7 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
   }
 
   return (
-    <AccountProvider enabled={authEnabled}>
+    <>
       <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
         {/* Positioned so the account menu drops from the bottom of this block,
           below the import banner rather than over it. */}
@@ -194,7 +256,7 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
                     opacity: pill ? 1 : 0,
                   }}
                 />
-                {TABS.map(({ id, label }) => {
+                {tabs.map(({ id, label }) => {
                   const active = id === tab;
                   return (
                     <button
@@ -224,6 +286,21 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
           {authEnabled && <ImportBanner />}
         </div>
 
+        {beta && visited.has("today") && (
+          <div
+            role="tabpanel"
+            id="panel-today"
+            aria-labelledby="tab-today"
+            className={tab === "today" ? PANEL : "hidden"}
+          >
+            <TodayTab
+              active={tab === "today"}
+              onStart={beginFocus}
+              onOpenPractice={() => select("practice")}
+            />
+          </div>
+        )}
+
         {visited.has("learn") && (
           <div
             role="tabpanel"
@@ -235,6 +312,13 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
               active={tab === "learn"}
               activeLesson={activeLesson}
               onStart={(lesson) => beginFocus(lesson.id)}
+              onChecked={
+                beta
+                  ? (id, c, t) => {
+                      postCheck(id, c, t, localDay()).catch(() => {});
+                    }
+                  : undefined
+              }
             />
           </div>
         )}
@@ -297,7 +381,7 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
           className="border-line bg-surface shrink-0 border-t-2 pb-[env(safe-area-inset-bottom)] sm:hidden"
         >
           <div className="mx-auto flex w-full max-w-2xl items-stretch">
-            {TABS.map(({ id, label }) => {
+            {tabs.map(({ id, label }) => {
               const active = id === tab;
               return (
                 <button
@@ -324,6 +408,6 @@ export function AppShell({ authEnabled = false }: { authEnabled?: boolean }) {
           </div>
         </nav>
       </div>
-    </AccountProvider>
+    </>
   );
 }

@@ -40,12 +40,15 @@ export function LessonSheet({
   done,
   onClose,
   onStart,
+  onChecked,
 }: {
   lesson: Lesson;
   number: number;
   done: boolean;
   onClose: () => void;
   onStart: (lesson: Lesson) => void;
+  /** Fired on every "Check answers" press with the score after grading. */
+  onChecked?: (correct: number, total: number) => void;
 }) {
   const content = getLessonContent(lesson.id);
   const titleId = `${lesson.id}-sheet-title`;
@@ -110,7 +113,7 @@ export function LessonSheet({
       }
     >
       {content && (
-        <LessonBody lesson={lesson} content={content} />
+        <LessonBody lesson={lesson} content={content} onChecked={onChecked} />
       )}
     </SheetFrame>
   );
@@ -128,9 +131,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 function LessonBody({
   lesson,
   content,
+  onChecked,
 }: {
   lesson: Lesson;
   content: LessonContent;
+  onChecked?: (correct: number, total: number) => void;
 }) {
   // Sections number themselves by render order, so a lesson that skips one
   // (e.g. no grammar ids) still reads 1 · 2 · 3 without a gap. The counter
@@ -286,7 +291,7 @@ function LessonBody({
 
       {content.check.length > 0 && (
         <Section title={label("Quick check")}>
-          <QuickCheck items={content.check} />
+          <QuickCheck items={content.check} onChecked={onChecked} />
         </Section>
       )}
     </>
@@ -365,7 +370,13 @@ function DialogueScript({
  * second wrong check on the same item also gives the answer away, so a
  * learner who is stuck is never left guessing.
  */
-function QuickCheck({ items }: { items: CheckItem[] }) {
+function QuickCheck({
+  items,
+  onChecked,
+}: {
+  items: CheckItem[];
+  onChecked?: (correct: number, total: number) => void;
+}) {
   const [values, setValues] = useState<string[]>(() => items.map(() => ""));
   /** null = not yet checked. */
   const [results, setResults] = useState<(boolean | null)[]>(() =>
@@ -380,6 +391,7 @@ function QuickCheck({ items }: { items: CheckItem[] }) {
     const next = items.map((item, i) => gradeGap(values[i], item));
     setResults(next);
     setMisses((m) => m.map((c, i) => (next[i] ? c : c + 1)));
+    onChecked?.(next.filter(Boolean).length, items.length);
   }
 
   return (
