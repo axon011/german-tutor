@@ -42,7 +42,7 @@ describe("nextLesson", () => {
   it("starts at the first A1 lesson", () => {
     const next = nextLesson({});
     expect(next?.lessonId).toBe(LESSONS[0].id);
-    expect(next?.position).toEqual({ level: "A1", index: 1, total: 8 });
+    expect(next?.position).toEqual({ level: "A1", index: 1, total: 20 });
   });
   it("skips mastered lessons", () => {
     const next = nextLesson({

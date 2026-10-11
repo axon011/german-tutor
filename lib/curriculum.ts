@@ -29,6 +29,28 @@ export interface Lesson {
 
 export const LESSONS: Lesson[] = [
   // ---------------------------------------------------------------- A1
+  // A1 runs in teaching order, not id order: ids are stable slugs that
+  // progress is keyed by, and the path grew from 8 to 20 lessons.
+  {
+    id: "a1-09-greetings-and-classroom",
+    level: "A1",
+    title: "Greetings & classroom phrases",
+    description:
+      "Greet people, say goodbye, and ask for help when you don't understand.",
+    focus:
+      "Thema dieser Lektion: begrüßen, verabschieden und im Kurs nachfragen. Übe mit dem Lerner: Hallo, Guten Morgen, Guten Tag, Tschüss, Auf Wiedersehen, Wie geht's?, und die wichtigsten Sätze im Deutschkurs (Wie bitte?, Ich verstehe das nicht., Können Sie das bitte wiederholen?, Langsam, bitte., Was heißt … auf Deutsch?). Grammatikfokus: du und Sie unterscheiden, feste Wendungen. Sprich besonders langsam und einfach, wechsle zwischen informeller und förmlicher Begrüßung und lass den Lerner passend antworten. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Hallo! Wie geht's?",
+  },
+  {
+    id: "a1-10-alphabet-and-spelling",
+    level: "A1",
+    title: "The alphabet & spelling",
+    description:
+      "Spell your name, your street and your email address letter by letter.",
+    focus:
+      "Thema dieser Lektion: das Alphabet und buchstabieren. Übe mit dem Lerner: die Buchstaben von A bis Z, die Umlaute ä, ö, ü und das ß, Namen, Straßennamen und E-Mail-Adressen buchstabieren (das Zeichen @ heißt \"ät\", außerdem Punkt und Bindestrich). Grammatikfokus: Fragen wie \"Wie schreibt man das?\" und \"Wie ist Ihr Name?\". Bitte den Lerner, Wörter zu buchstabieren, und buchstabiere selbst kurze Wörter, die er erraten soll. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Mein Name ist … Ich buchstabiere: …",
+  },
   {
     id: "a1-01-introduce-yourself",
     level: "A1",
@@ -38,6 +60,16 @@ export const LESSONS: Lesson[] = [
     focus:
       "Thema dieser Lektion: sich vorstellen. Übe mit dem Lerner: Name, Herkunft, Wohnort, Beruf. Grammatikfokus: Präsens von \"sein\" und \"heißen\", W-Fragen (Wie? Woher? Wo? Was?). Stelle immer nur eine Frage auf einmal und wiederhole die Antwort des Lerners in einem vollständigen Satz. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
     starter: "Hallo! Ich heiße …",
+  },
+  {
+    id: "a1-11-countries-and-languages",
+    level: "A1",
+    title: "Countries & languages",
+    description:
+      "Say where people come from and which languages you speak.",
+    focus:
+      "Thema dieser Lektion: Länder und Sprachen. Übe mit dem Lerner: Herkunftsländer, Sprachen, wo man welche Sprache spricht. Grammatikfokus: Konjugation im Präsens (ich komme, du kommst, er kommt), das unregelmäßige Verb \"sprechen\" (du sprichst, er spricht), \"aus\" für die Herkunft und \"in\" für den Wohnort. Frage nach Sprachen, die der Lerner spricht, und nach Ländern, die er kennt. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Ich spreche Englisch und ein bisschen Deutsch.",
   },
   {
     id: "a1-02-family",
@@ -56,6 +88,16 @@ export const LESSONS: Lesson[] = [
     focus:
       "Thema dieser Lektion: Zahlen, Uhrzeit und Datum. Übe mit dem Lerner: Zahlen bis 100, die Uhrzeit (\"Es ist halb acht\"), Wochentage, Monate, Geburtstag. Grammatikfokus: Präpositionen \"um\", \"am\", \"im\", Fragen mit \"Wann?\" und \"Wie spät?\". Frage nach konkreten Zeiten aus dem Alltag des Lerners und korrigiere die Zeitangaben durch Recasting. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
     starter: "Es ist jetzt zehn Uhr.",
+  },
+  {
+    id: "a1-12-personal-details",
+    level: "A1",
+    title: "Personal details & forms",
+    description:
+      "Give your address, phone number and date of birth, as on an official form.",
+    focus:
+      "Thema dieser Lektion: persönliche Daten und Formulare. Übe mit dem Lerner: Vorname, Nachname, Adresse, Postleitzahl, Telefonnummer, Geburtsdatum, Geburtsort, Familienstand (ledig, verheiratet). Grammatikfokus: höfliche W-Fragen mit \"Sie\" (Wie ist Ihre Adresse? Wann sind Sie geboren?), Zahlen und Datum. Spiel eine Person am Schalter, zum Beispiel im Bürgeramt, und frage die Daten nacheinander ab. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Mein Vorname ist …, mein Nachname ist …",
   },
   {
     id: "a1-04-food-and-drinks",
@@ -85,6 +127,26 @@ export const LESSONS: Lesson[] = [
     starter: "Was kostet das Brot?",
   },
   {
+    id: "a1-14-clothes-and-colours",
+    level: "A1",
+    title: "Clothes & colours",
+    description:
+      "Talk about clothes, colours and sizes, and say what you like.",
+    focus:
+      "Thema dieser Lektion: Kleidung und Farben. Übe mit dem Lerner: Hose, Hemd, Kleid, Jacke, Schuhe, Farben, Größen und Preise im Geschäft. Grammatikfokus: Akkusativ (Ich suche einen Pullover.), Pluralformen und die feste Wendung \"Der Pullover gefällt mir.\" / \"Die Schuhe gefallen mir.\". Spiel gern eine Verkäuferin oder einen Verkäufer im Kleidungsgeschäft. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Ich suche eine Jacke in Blau.",
+  },
+  {
+    id: "a1-13-my-flat",
+    level: "A1",
+    title: "My flat",
+    description:
+      "Describe where you live: the rooms, the furniture and what you like about it.",
+    focus:
+      "Thema dieser Lektion: die eigene Wohnung. Übe mit dem Lerner: Zimmer, Möbel, groß und klein, hell und dunkel, alt und neu, teuer und billig. Grammatikfokus: \"Es gibt\" mit Akkusativ, Pluralformen, Verneinung mit \"kein\" und \"nicht\", Adjektive nach \"sein\" (Die Küche ist klein.). Frage, wie viele Zimmer die Wohnung hat und was es darin gibt. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Meine Wohnung hat zwei Zimmer.",
+  },
+  {
     id: "a1-07-directions-and-places",
     level: "A1",
     title: "Directions & places in town",
@@ -94,6 +156,16 @@ export const LESSONS: Lesson[] = [
     starter: "Entschuldigung, wo ist der Bahnhof?",
   },
   {
+    id: "a1-15-transport-and-tickets",
+    level: "A1",
+    title: "Transport & tickets",
+    description:
+      "Ask when trains and buses leave, buy a ticket and say how you get around.",
+    focus:
+      "Thema dieser Lektion: Verkehrsmittel und Fahrkarten. Übe mit dem Lerner: Bus, Bahn, Zug, U-Bahn, Fahrrad, Fahrkarte, Gleis, Abfahrt, Ankunft. Grammatikfokus: Fragen mit \"Wann?\" und \"Wo?\", trennbare Verben (abfahren, ankommen, umsteigen) und die feste Wendung \"mit dem Bus\" / \"mit der Bahn\". Spiel eine Person am Fahrkartenschalter oder am Bahnhof. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Wann fährt der nächste Zug nach Berlin?",
+  },
+  {
     id: "a1-08-hobbies",
     level: "A1",
     title: "Hobbies & free time",
@@ -101,6 +173,56 @@ export const LESSONS: Lesson[] = [
     focus:
       "Thema dieser Lektion: Hobbys und Freizeit. Übe mit dem Lerner: Sport, Musik, Lesen, Freunde treffen, Häufigkeit (oft, manchmal, nie). Grammatikfokus: Verben mit \"gern\" und \"nicht gern\", Modalverb \"können\", Häufigkeitsangaben im Satz. Frage nach dem Wochenende und nach konkreten Aktivitäten. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
     starter: "Ich spiele gern Fußball.",
+  },
+  {
+    id: "a1-18-describing-people",
+    level: "A1",
+    title: "Describing people",
+    description:
+      "Describe what friends and family look like and what they are like.",
+    focus:
+      "Thema dieser Lektion: Personen beschreiben. Übe mit dem Lerner: Aussehen (groß, klein, Haare, Augen, Brille), Charakter (nett, lustig, ruhig), Alter. Grammatikfokus: \"sein\" mit Adjektiv, \"haben\" mit Nomen (Sie hat lange Haare.), die Possessivartikel \"sein\" und \"ihr\". Bitte den Lerner, eine Freundin, einen Freund oder ein Familienmitglied zu beschreiben, und frage nach Details. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Meine Freundin ist groß und hat kurze Haare.",
+  },
+  {
+    id: "a1-16-phone-and-appointments",
+    level: "A1",
+    title: "Phone calls & appointments",
+    description:
+      "Make a short phone call and arrange a time to meet.",
+    focus:
+      "Thema dieser Lektion: telefonieren und einen Termin machen. Übe mit dem Lerner: sich am Telefon melden, nach einer Person fragen, einen Termin vereinbaren, Wochentage und Uhrzeiten, sich verabschieden. Grammatikfokus: die Modalverben \"können\" und \"müssen\" mit dem Infinitiv am Satzende, Zeitangaben mit \"am\" und \"um\". Spiel eine Praxis oder ein Büro am Telefon und schlage Termine vor. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Guten Tag, ich möchte einen Termin machen.",
+  },
+  {
+    id: "a1-17-feeling-ill",
+    level: "A1",
+    title: "Feeling ill",
+    description:
+      "Say what hurts, call in sick and understand simple advice.",
+    focus:
+      "Thema dieser Lektion: krank sein. Übe mit dem Lerner: Körperteile (Kopf, Bauch, Hals, Rücken), \"Ich habe Kopfschmerzen\", \"Ich habe Fieber\", \"Ich bin krank\", sich krankmelden, einfache Ratschläge. Grammatikfokus: \"haben\" mit Schmerzen und Fieber, \"sein\" mit krank und müde, das Modalverb \"müssen\" (Sie müssen im Bett bleiben.). Frage, wie es dem Lerner geht, und spiele kurz eine Ärztin oder einen Arzt. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Ich bin krank. Ich habe Kopfschmerzen.",
+  },
+  {
+    id: "a1-19-birthdays-and-celebrations",
+    level: "A1",
+    title: "Birthdays & celebrations",
+    description:
+      "Say when your birthday is, congratulate someone and talk about presents.",
+    focus:
+      "Thema dieser Lektion: Geburtstag und Feste. Übe mit dem Lerner: Monate, das Datum mit Ordinalzahlen (am ersten Mai, am dritten Juni), gratulieren (Herzlichen Glückwunsch!), Geschenke, feiern. Grammatikfokus: Ordinalzahlen im Datum, Akkusativ (Ich kaufe einen Kuchen.), \"im\" mit Monaten. Frage nach dem Geburtstag des Lerners und wie er ihn feiert. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Mein Geburtstag ist am zwölften März.",
+  },
+  {
+    id: "a1-20-short-messages",
+    level: "A1",
+    title: "Writing a short message",
+    description:
+      "Write a short text or email: invite someone, cancel, or say you'll be late.",
+    focus:
+      "Thema dieser Lektion: eine kurze Nachricht schreiben. Übe mit dem Lerner: Anrede (Liebe Anna, Lieber Tom, Hallo), kurze Nachrichten zum Einladen, Absagen oder Zuspätkommen, Grüße am Ende (Viele Grüße, Bis bald). Grammatikfokus: das Verb an zweiter Stelle, Begründungen mit \"denn\", Modalverben (Ich kann leider nicht kommen.). Bitte den Lerner, kurze Nachrichten zu schreiben, und antworte selbst wie eine Freundin oder ein Freund per Nachricht. Beginne selbst mit einer einfachen Frage dazu, falls der Lerner nur grüßt.",
+    starter: "Liebe Anna, ich kann heute leider nicht kommen.",
   },
 
   // ---------------------------------------------------------------- A2

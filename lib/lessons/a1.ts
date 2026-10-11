@@ -199,7 +199,7 @@ export const A1_CONTENT: Record<string, LessonContent> = {
       { de: "aufstehen", en: "to get up" },
       { de: "frühstücken", en: "to have breakfast" },
       { de: "duschen", en: "to shower" },
-      { de: "arbeiten", en: "to work" },
+      { de: "aufräumen", en: "to tidy up" },
       { de: "einkaufen", en: "to go shopping" },
       { de: "kochen", en: "to cook" },
       { de: "fernsehen", en: "to watch TV" },
