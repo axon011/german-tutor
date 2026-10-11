@@ -64,12 +64,30 @@ def synthesize(voice, text: str) -> tuple[bytes, int]:
     .audio_int16_bytes and .sample_rate. Older 1.2.x: voice.synthesize_stream_raw
     yields raw int16 bytes and the rate is voice.config.sample_rate.
     """
+    # Natural pace for everything. Slowing single words down (length_scale
+    # 1.15) was tried and made them LESS intelligible in Whisper round-trips;
+    # learners who want it slower have the drill's "Slow" button instead.
+    length_scale = 1.0
     if hasattr(voice, "synthesize_stream_raw"):
-        pcm = b"".join(voice.synthesize_stream_raw(text))
+        pcm = b"".join(voice.synthesize_stream_raw(text, length_scale=length_scale))
         return pcm, voice.config.sample_rate
-    chunks = list(voice.synthesize(text))
+    from piper.config import SynthesisConfig
+
+    chunks = list(voice.synthesize(text, syn_config=SynthesisConfig(length_scale=length_scale)))
     pcm = b"".join(c.audio_int16_bytes for c in chunks)
     return pcm, chunks[0].sample_rate
+
+
+def pad_silence(pcm: bytes, sample_rate: int) -> bytes:
+    """
+    Frame the speech with silence. Without it the first and last sounds get
+    swallowed — by the mp3 encoder's edge frames and by the browser starting
+    playback a beat late. Whisper round-trips made it obvious on single words:
+    "der Bauch" came back as "der Bau", "die Lampe" as "die Lamp".
+    """
+    lead = b"\x00\x00" * int(sample_rate * 0.15)
+    tail = b"\x00\x00" * int(sample_rate * 0.25)
+    return lead + pcm + tail
 
 
 def encode_mp3(pcm: bytes, sample_rate: int) -> bytes:
@@ -103,7 +121,7 @@ def main() -> int:
         voice = load_voice(ensure_voice(Path(args.voice_dir)))
         for i, e in enumerate(todo, 1):
             pcm, rate = synthesize(voice, e["text"])
-            (out / f"{e['key']}.mp3").write_bytes(encode_mp3(pcm, rate))
+            (out / f"{e['key']}.mp3").write_bytes(encode_mp3(pad_silence(pcm, rate), rate))
             generated += 1
             print(f"\r  {i}/{len(todo)}", end="", flush=True)
         print()
