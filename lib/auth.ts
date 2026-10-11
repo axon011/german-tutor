@@ -12,6 +12,7 @@ import NextAuth, { type DefaultSession } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import { isAuthEnabled } from "./auth-enabled";
 import { getDb, schema } from "./db";
+import { isBetaLogin } from "./path/beta";
 
 declare module "next-auth" {
   interface Session {
@@ -19,6 +20,8 @@ declare module "next-auth" {
       id: string;
       /** GitHub handle — `name` is the display name and may be unset. */
       login?: string;
+      /** In PATH_BETA_LOGINS — sees the learning path (Today tab). */
+      beta?: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -48,6 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => ({
     session({ session, token }) {
       if (token.sub) session.user.id = token.sub;
       if (typeof token.login === "string") session.user.login = token.login;
+      session.user.beta = isBetaLogin(token.login as string | undefined);
       return session;
     },
   },

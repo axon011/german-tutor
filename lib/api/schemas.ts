@@ -6,7 +6,9 @@
 
 import { z } from "zod";
 import { ERROR_TYPES } from "../corrector";
+import { getLesson } from "../curriculum";
 import { getFocusEntry } from "../focus";
+import { DAY_PATTERN } from "../path/types";
 import { CEFR_LEVELS } from "../tutor-prompt";
 
 export const MAX_APPEND_ERRORS = 50;
@@ -45,7 +47,32 @@ export const lessonIdSchema = z
   .max(80)
   .refine((id) => getFocusEntry(id) !== undefined, "Unknown lesson id");
 
-export const lessonActionSchema = z.object({ lessonId: lessonIdSchema });
+/** The learner's local calendar day, YYYY-MM-DD (learning path activity). */
+export const daySchema = z.string().regex(DAY_PATTERN);
+
+/** `day` is optional: only the beta learning path counts activity per day. */
+export const lessonActionSchema = z.object({
+  lessonId: lessonIdSchema,
+  day: daySchema.optional(),
+});
+
+/** A quick-check submission; the lesson must exist in the path. */
+export const pathCheckSchema = z.object({
+  lessonId: z
+    .string()
+    .min(1)
+    .max(100)
+    .refine((id) => getLesson(id) !== undefined, "Unknown lesson id"),
+  correct: z.number().int().min(0).max(3),
+  total: z.union([z.literal(3), z.number().int().min(1).max(10)]),
+  day: daySchema,
+});
+
+export const wordReviewSchema = z.object({
+  id: z.uuid(),
+  quality: z.union([z.literal(0), z.literal(3), z.literal(5)]),
+  day: daySchema,
+});
 
 export const reviewSchema = z.object({
   id: z.uuid(),

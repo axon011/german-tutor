@@ -124,6 +124,8 @@ export const lessonProgress = pgTable(
       .defaultNow(),
     turns: integer("turns").notNull().default(0),
     completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" }),
+    /** Best quick-check score (0–3) on the learning path; null before the first check. */
+    checkBest: integer("check_best"),
   },
   (t) => [primaryKey({ columns: [t.userId, t.lessonId] })],
 );
@@ -161,4 +163,61 @@ export const srsCards = pgTable(
     ),
     index("srs_cards_user_due_idx").on(t.userId, t.dueAt),
   ],
+);
+
+/**
+ * SM-2 review state for one lesson word (learning path, beta). Seeded from
+ * the lesson's study sheet the first time its quick check is submitted; the
+ * unique (user, lesson, word) index makes re-seeding a no-op.
+ */
+export const wordCards = pgTable(
+  "word_cards",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    lessonId: text("lesson_id").notNull(),
+    de: text("de").notNull(),
+    en: text("en").notNull(),
+    gender: varchar("gender", { length: 1 }),
+    plural: text("plural"),
+    ease: real("ease").notNull().default(2.5),
+    intervalDays: real("interval_days").notNull().default(0),
+    reps: integer("reps").notNull().default(0),
+    lapses: integer("lapses").notNull().default(0),
+    dueAt: timestamp("due_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("word_cards_user_lesson_word_uq").on(
+      t.userId,
+      t.lessonId,
+      t.de,
+    ),
+    index("word_cards_user_due_idx").on(t.userId, t.dueAt),
+  ],
+);
+
+/**
+ * What a learner did on one calendar day (learning path, beta). `day` is the
+ * learner's LOCAL date as sent by the client (YYYY-MM-DD), so streaks follow
+ * their own midnight rather than the server's.
+ */
+export const dailyActivity = pgTable(
+  "daily_activity",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    day: varchar("day", { length: 10 }).notNull(),
+    reviews: integer("reviews").notNull().default(0),
+    checks: integer("checks").notNull().default(0),
+    turns: integer("turns").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] })],
 );

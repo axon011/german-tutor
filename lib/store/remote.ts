@@ -16,6 +16,7 @@ import {
   onLessonProgressChange,
   type LessonEntry,
 } from "../lesson-progress";
+import { localDay } from "../path/day";
 import type { SrsQuality } from "../srs";
 import { SRS_EVENT } from "./local";
 import type { LessonProgressMap, ProgressStore, SrsCard } from "./types";
@@ -65,7 +66,8 @@ export class RemoteStore implements ProgressStore {
   async recordLessonTurn(lessonId: string): Promise<LessonEntry | undefined> {
     const { entry } = await call<{ entry: LessonEntry }>(
       "/api/me/lessons/turn",
-      { lessonId },
+      // `day` lets the server count the turn toward the learning path's streak.
+      { lessonId, day: localDay() },
     );
     notify(LESSON_PROGRESS_EVENT);
     return entry;

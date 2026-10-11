@@ -5,11 +5,31 @@
  */
 
 import type { z } from "zod";
-import { getUserId } from "../auth";
+import { auth, getUserId } from "../auth";
+import { isBetaLogin } from "../path/beta";
 
 export async function requireUser(): Promise<string | Response> {
   const userId = await getUserId();
   return userId ?? Response.json({ error: "Not signed in" }, { status: 401 });
+}
+
+/**
+ * requireUser plus the beta allow-list. Non-beta accounts get the same 404 an
+ * unknown route would, so the learning path is invisible to them rather than
+ * "forbidden".
+ */
+export async function requireBetaUser(): Promise<string | Response> {
+  const userId = await requireUser();
+  if (userId instanceof Response) return userId;
+  let login: string | undefined;
+  try {
+    login = (await auth())?.user?.login;
+  } catch {
+    login = undefined;
+  }
+  if (!isBetaLogin(login))
+    return Response.json({ error: "Not found" }, { status: 404 });
+  return userId;
 }
 
 /**
